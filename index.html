@@ -192,7 +192,8 @@
                     <button type="button" class="btn-close" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="reservation-container">
+                    <div class="reservation-container" id="detail_reservation_content">
+                        <p class="id"></p>
                         <p class="room-name"></p>
                         <p class="start-time"></p>
                         <p class="end-time"></p>
@@ -200,6 +201,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="del_reservation_btn">예약 삭제하기</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary">Save changes</button>
                 </div>

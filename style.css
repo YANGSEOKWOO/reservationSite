@@ -13,3 +13,7 @@ body {
 .reserved {
     cursor: pointer;
 }
+
+#login_btn {
+    min-width: 74px;
+}

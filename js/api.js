@@ -100,14 +100,29 @@ const reserveModule = ((jq) => {
         });
 
         jq(".reserved").on("click", function () {
+            const id = jq(this).data("id");
             const room = jq(this).data("room");
             const start = jq(this).data("start");
             const end = jq(this).data("end");
             const team = jq(this).data("team");
+            console.log("id", id);
+            console.log("room", room);
+            console.log("start", start);
+            console.log("end", end);
+            console.log("team", team);
 
+            jq(".id").text(`예약 id: ${id}`);
             jq(".room-name").text(`회의실: ${room}`);
             jq(".start-time").text(`시간: ${start} - ${end}`);
-            jq(".team-name").text(`팀: ${team}`);
+            jq(".team-name").text(`팀: ${team}`).data({ team: team });
+
+            jq("#detail_reservation_content").data({
+                id: id,
+                room: room,
+                start: start,
+                end: end,
+                team: team,
+            });
 
             jq("#detail_reservation_modal").modal("show");
         });
@@ -164,10 +179,14 @@ const reserveModule = ((jq) => {
             format: "YYYY-MM-DD",
         });
 
-        jq("#reservation_from").datetimepicker({
-            format: "HH:mm", // 시간과 분만 표시
-            stepping: 60, // 1시간 간격
-        });
+        jq("#reservation_from")
+            .datetimepicker({
+                format: "HH:mm", // 시간과 분만 표시
+                stepping: 60, // 1시간 간격
+            })
+            .on("dp.change", function handleFromDateChange(e) {
+                jq("#reservation_to").data("DateTimePicker").minDate(e.date);
+            });
 
         jq("#reservation_to").datetimepicker({
             format: "HH:mm", // 시간과 분만 표시
@@ -179,18 +198,18 @@ const reserveModule = ((jq) => {
         jq("#reserve_btn").on("click", function () {
             const room = jq("#room_select .dropdown-item.active").data("value");
             const team = jq("#team_select .dropdown-item.active").data("value");
-            const date = jq("#reservation_date")
-                .data("DateTimePicker")
-                .date()
-                .format("YYYY-MM-DD");
-            const start = jq("#reservation_from")
-                .data("DateTimePicker")
-                .date()
-                .format("HH:mm");
-            const end = jq("#reservation_to")
-                .data("DateTimePicker")
-                .date()
-                .format("HH:mm");
+            const datePicker = jq("#reservation_date").data("DateTimePicker");
+            const fromPicker = jq("#reservation_from").data("DateTimePicker");
+            const toPicker = jq("#reservation_to").data("DateTimePicker");
+
+            if (!room || !team || !datePicker || !fromPicker || !toPicker) {
+                alert("모든 필드를 채워주세요.");
+                return;
+            }
+
+            const date = datePicker.date().format("YYYY-MM-DD");
+            const start = fromPicker.date().format("HH:mm");
+            const end = toPicker.date().format("HH:mm");
 
             if (!isTimeSlotAvailable(date, room, start, end)) {
                 alert("이미 예약된 시간이 있습니다.");
@@ -256,6 +275,37 @@ const reserveModule = ((jq) => {
         jq("#logout_btn").on("click", function (e) {
             e.preventDefault();
             window.location.href = window.location.pathname;
+        });
+
+        // 예약 삭제 버튼 클릭 이벤트
+        jq("#del_reservation_btn").on("click", function () {
+            const id = jq("#detail_reservation_content").data("id");
+            const reservationTeam = jq("#detail_reservation_content").data(
+                "team"
+            );
+            console.log("id", id);
+            console.log("reservation", reservationTeam);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentTeam = urlParams.get("team");
+
+            console.log("currentTeam:", currentTeam);
+
+            if (reservationTeam !== currentTeam) {
+                alert("삭제 권한이 없습니다.");
+                return;
+            }
+
+            const date = _searchDate;
+            mockData[date] = mockData[date].filter(
+                (reservation) => reservation.id !== id
+            );
+
+            // 모달 닫기
+            jq("#detail_reservation_modal").modal("hide");
+
+            // 새로운 예약 데이터로 업데이트
+            reserveModule.load(date);
         });
         _pubFn.checkLoginStatus = () => {
             const urlParams = new URLSearchParams(window.location.search);
