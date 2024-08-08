@@ -59,17 +59,16 @@
     <h3>회의실 예약</h3>
     <!-- 로그인 폼 추가 -->
     <div class="login-container d-flex text-center" style="max-height: 38px;">
-        <h4>로그인</h4>
-        <form id="login_form" class="d-flex">
-            <div class="mb-3 d-flex">
-                <label for="username" class="form-label" style="min-width: 40px;">아이디</label>
+        <form id="login_form" class="d-flex align-items-center gap-3 mb-3">
+            <div class=" middle-css">
+                <label for="username" class="form-label mt-2" style="min-width: 40px;">아이디</label>
                 <input type="text" class="form-control" id="username" required>
             </div>
-            <div class="mb-3 d-flex">
-                <label for="password" class="form-label" style="min-width: 60px;">비밀번호</label>
+            <div class="middle-css">
+                <label for="password" class="form-label mt-2" style="min-width: 60px;">비밀번호</label>
                 <input type="password" class="form-control" id="password" required>
             </div>
-            <div class="dropdown mb-3">
+            <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button" id="login_team_select_btn"
                     data-bs-toggle="dropdown">팀 선택</button>
                 <ul class="dropdown-menu" id="login_team_select">
