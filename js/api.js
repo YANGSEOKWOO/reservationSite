@@ -251,6 +251,12 @@ const reserveModule = ((jq) => {
             const queryParams = `?username=${username}&team=${team}`;
             window.location.href = window.location.pathname + queryParams;
         });
+
+        // 로그아웃 버튼 클릭 이벤트
+        jq("#logout_btn").on("click", function (e) {
+            e.preventDefault();
+            window.location.href = window.location.pathname;
+        });
         _pubFn.checkLoginStatus = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const username = urlParams.get("username");
