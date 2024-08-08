@@ -1,0 +1,15 @@
+body {
+    font-family: tahoma, verdana, helvetica;
+    font-size: 0.8em;
+    padding: 10px;
+}
+
+.middle-css {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.reserved {
+    cursor: pointer;
+}
