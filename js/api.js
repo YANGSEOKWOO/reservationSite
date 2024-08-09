@@ -27,6 +27,7 @@ const teamColors = {
 const reserveModule = ((jq) => {
     let _pubFn = {};
     let isEditing = false;
+    let _reservationData;
     const DateTime = luxon.DateTime;
     const today = DateTime.now();
     const todayFormatted = today.toFormat("yyyy-MM-dd");
@@ -40,6 +41,7 @@ const reserveModule = ((jq) => {
      * Time 데이터를 Number로 바꾸는 함수
      */
     const timeToNum = (time) => {
+        console.log("문제의 시발점:", time);
         const [hours, minutes] = time.split(":");
         return parseInt(hours) + parseInt(minutes) / 60;
     };
@@ -144,6 +146,11 @@ const reserveModule = ((jq) => {
             jq("#detail_reservation_modal").modal("show");
         });
     };
+    /**
+     * Update : 예약데이터를 업데이트하는 함수
+     * @param {*} param0
+     * @returns
+     */
     const updateReservationData = ({
         id,
         room_name,
@@ -176,6 +183,11 @@ const reserveModule = ((jq) => {
                 });
         });
     };
+    /**
+     * DELETE 예약내용을 삭제하는 함수
+     * @param {} param0
+     * @returns
+     */
     const deleteReservationData = ({ id }) => {
         return new Promise((resolve, reject) => {
             jq.ajax({
@@ -191,7 +203,11 @@ const reserveModule = ((jq) => {
                 });
         });
     };
-
+    /**
+     * CREATE 예약하는 함수
+     * @param {*} param0
+     * @returns
+     */
     const createReservation = ({
         room_name,
         team_name,
@@ -235,14 +251,18 @@ const reserveModule = ((jq) => {
      * 예약할 때, 자리가 비었는지 리턴하는 함수
      */
     const isTimeSlotAvailable = (date, room, start, end) => {
-        const reservations = mockData[date] || [];
+        const reservations = _reservationData;
+        console.log("start:", start);
+        console.log("end:", end);
         const startTime = timeToNum(start);
         const endTime = timeToNum(end);
+        console.log("startTime:", startTime);
+        console.log("endTime:,", endTime);
 
         for (const reservation of reservations) {
             if (reservation.room === room) {
-                const existingStartTime = timeToNum(reservation.start);
-                const existingEndTime = timeToNum(reservation.end);
+                const existingStartTime = timeToNum(reservation.start_time);
+                const existingEndTime = timeToNum(reservation.end_time);
 
                 if (
                     (startTime >= existingStartTime &&
@@ -261,8 +281,8 @@ const reserveModule = ((jq) => {
 
     _pubFn.load = async () => {
         await reserveModule.loadMeetingRooms();
-        const reservationData = await getReservationData({ date: _searchDate });
-        displayReservationData({ reservationData: reservationData });
+        _reservationData = await getReservationData({ date: _searchDate });
+        displayReservationData({ reservationData: _reservationData });
     };
 
     _pubFn.initEventListeners = () => {
