@@ -8,8 +8,8 @@ const mockData = {
         { id: 3, room: 3, start: "09:00", end: "11:00", team: "marketing" },
     ],
     "2024-08-08": [
-        { id: 4, room: 1, start: "11:00", end: "13:00", team: "devOps" },
-        { id: 5, room: 2, start: "12:00", end: "14:00", team: "hr" },
+        { id: 4, room: 1, start: "11:00", end: "13:00", team: "hr" },
+        { id: 5, room: 2, start: "12:00", end: "14:00", team: "devOps" },
         { id: 6, room: 3, start: "15:00", end: "17:00", team: "finance" },
     ],
 };
@@ -35,7 +35,11 @@ const reserveModule = ((jq) => {
 
     const baseurl = "http://127.0.0.1:8000";
 
-    const timeToInt = (time) => {
+    /**
+     *
+     * Time 데이터를 Number로 바꾸는 함수
+     */
+    const timeToNum = (time) => {
         const [hours, minutes] = time.split(":");
         return parseInt(hours) + parseInt(minutes) / 60;
     };
@@ -46,12 +50,21 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const getReservationData = ({ date }) => {
+        console.log("date", date);
+        const url = `http://127.0.0.1:8005/api/reservation/list?book_date=${date}`;
         return new Promise((resolve, reject) => {
             jq("#loader").show();
-            setTimeout(() => {
-                resolve(mockData[date] || []);
-                jq("#loader").hide();
-            }, 1000);
+            jq.ajax({
+                type: "GET",
+                url: url,
+            })
+                .done((response) => {
+                    jq("#loader").hide();
+                    resolve(response);
+                })
+                .fail((error) => {
+                    reject(error);
+                });
         });
     };
 
@@ -64,6 +77,8 @@ const reserveModule = ((jq) => {
         console.log("reservationData:", reservationData);
         let rows = "";
         const existingRooms = {};
+
+        // 회의실 세팅
         reservationData.forEach((data) => {
             if (!existingRooms[data.room]) {
                 existingRooms[
@@ -78,9 +93,10 @@ const reserveModule = ((jq) => {
 
         jq(".reserve-items").html(Object.values(existingRooms).join(""));
 
+        // Slot 세팅
         reservationData.forEach((data) => {
-            const start = timeToInt(data.start);
-            const end = timeToInt(data.end);
+            const start = timeToNum(data.start_time);
+            const end = timeToNum(data.end_time);
             const roomRow = jq(`tr[data-room='${data.room}'] td`);
             for (let i = 8; i <= 19; i++) {
                 if (i >= start && i < end) {
@@ -91,8 +107,8 @@ const reserveModule = ((jq) => {
                         .data({
                             id: data.id,
                             room: data.room,
-                            start: data.start,
-                            end: data.end,
+                            start: data.start_time,
+                            end: data.end_time,
                             team: data.team,
                         });
                 }
@@ -128,15 +144,74 @@ const reserveModule = ((jq) => {
         });
     };
 
+    const deleteReservationData = ({ id }) => {
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                url: baseurl + "/api/reservation/delete", // API 엔드포인트
+                type: "DELETE",
+                data: { id: id },
+            })
+                .done(() => {
+                    alert("삭제가 완료되었습니다.");
+                    resolve();
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
+
+    const createReservation = ({
+        room_name,
+        team_name,
+        book_date,
+        start_time,
+        end_time,
+    }) => {
+        console.log("createReservation called"); // 함수가 호출되었는지 확인
+
+        const url = `http://127.0.0.1:8005/api/reservation/create`;
+        const formattedStartTime = `${start_time}:00`;
+        const formattedEndTime = `${end_time}:00`;
+        const data = JSON.stringify({
+            room_name: room_name,
+            team_name: team_name,
+            book_date: book_date,
+            start_time: formattedStartTime,
+            end_time: formattedEndTime,
+        });
+        console.log("data:", data);
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                url: url,
+                type: "POST",
+                dataType: "json",
+                data: data,
+                contentType: "application/json",
+            })
+                .done((response) => {
+                    console.log("시도했음");
+                    alert("예약이 완료되었습니다.");
+                    resolve(response);
+                })
+                .fail((error) => {
+                    console.log("실패했음");
+                    reject(error);
+                });
+        });
+    };
+    /**
+     * 예약할 때, 자리가 비었는지 리턴하는 함수
+     */
     const isTimeSlotAvailable = (date, room, start, end) => {
         const reservations = mockData[date] || [];
-        const startTime = timeToInt(start);
-        const endTime = timeToInt(end);
+        const startTime = timeToNum(start);
+        const endTime = timeToNum(end);
 
         for (const reservation of reservations) {
             if (reservation.room === room) {
-                const existingStartTime = timeToInt(reservation.start);
-                const existingEndTime = timeToInt(reservation.end);
+                const existingStartTime = timeToNum(reservation.start);
+                const existingEndTime = timeToNum(reservation.end);
 
                 if (
                     (startTime >= existingStartTime &&
@@ -195,7 +270,7 @@ const reserveModule = ((jq) => {
         });
 
         // 예약하기 버튼 클릭 이벤트
-        jq("#reserve_btn").on("click", function () {
+        jq("#reserve_btn").on("click", async function () {
             const room = jq("#room_select .dropdown-item.active").data("value");
             const team = jq("#team_select .dropdown-item.active").data("value");
             const datePicker = jq("#reservation_date").data("DateTimePicker");
@@ -217,11 +292,22 @@ const reserveModule = ((jq) => {
             }
 
             // 예약 데이터 추가
-            const newId = Object.values(mockData).flat().length + 1;
-            if (!mockData[date]) {
-                mockData[date] = [];
+            // const newId = Object.values(mockData).flat().length + 1;
+            // if (!mockData[date]) {
+            //     mockData[date] = [];
+            // }
+            // mockData[date].push({ id: newId, room, start, end, team });
+            try {
+                await createReservation({
+                    room_name: room,
+                    team_name: team,
+                    book_date: date,
+                    start_time: start,
+                    end_time: end,
+                });
+            } catch (error) {
+                console.log("error:", error);
             }
-            mockData[date].push({ id: newId, room, start, end, team });
 
             // 모달 닫기
             jq("#reservation_modal").modal("hide");
@@ -307,19 +393,26 @@ const reserveModule = ((jq) => {
             // 새로운 예약 데이터로 업데이트
             reserveModule.load(date);
         });
-        _pubFn.checkLoginStatus = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const username = urlParams.get("username");
-            const team = urlParams.get("team");
 
-            if (username && team) {
-                jq(".login-container").addClass("d-none");
-                jq("#welcome_message").text(
-                    `${username}님 안녕하세요! (Team: ${team})`
-                );
-                jq("#welcome_container").removeClass("d-none");
-            }
-        };
+        /**
+         * urlquery로 로그인 상태를 확인
+         * 로그인 => username과 team을 띄운다.
+         * 로그아웃 => 로그인 폼을 띄운다.
+         *
+         */
+    };
+    _pubFn.checkLoginStatus = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get("username");
+        const team = urlParams.get("team");
+
+        if (username && team) {
+            jq(".login-container").addClass("d-none");
+            jq("#welcome_message").text(
+                `${username}님 안녕하세요! (Team: ${team})`
+            );
+            jq("#welcome_container").removeClass("d-none");
+        }
     };
 
     return _pubFn;
