@@ -101,11 +101,8 @@ const reserveModule = ((jq) => {
             const roomRow = jq(`tr[data-room='${data.room}'] td`);
             for (let i = 8; i <= 19; i++) {
                 if (i >= start && i < end) {
-                    roomRow
-                        .eq(i - 7)
-                        .addClass(
-                            `reserved data-bs-toggle="tooltip" data-bs-title=${data.team}`
-                        )
+                    const cell = roomRow.eq(i - 7);
+                    cell.addClass("reserved")
                         .css("background-color", teamColors[data.team])
                         .data({
                             id: data.id,
@@ -113,9 +110,17 @@ const reserveModule = ((jq) => {
                             start: data.start_time,
                             end: data.end_time,
                             team: data.team,
-                        });
+                        })
+                        .attr("data-bs-toggle", "tooltip")
+                        .attr("title", data.team); // This sets the tooltip text
                 }
             }
+        });
+        const tooltipTriggerList = [].slice.call(
+            document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        );
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
         jq(".reserved").on("click", function () {
@@ -124,16 +129,21 @@ const reserveModule = ((jq) => {
             const start = jq(this).data("start");
             const end = jq(this).data("end");
             const team = jq(this).data("team");
-            console.log("id", id);
-            console.log("room", room);
-            console.log("start", start);
-            console.log("end", end);
-            console.log("team", team);
 
-            jq(".id").text(`예약 id: ${id}`);
-            jq(".room-name").text(`회의실: ${room}`);
-            jq(".start-time").text(`시간: ${start} - ${end}`);
-            jq(".team-name").text(`팀: ${team}`).data({ team: team });
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentTeam = urlParams.get("team");
+            if (currentTeam !== team) {
+                jq("#del_reservation_btn").hide();
+                jq("#edit_reservation_btn").hide();
+            } else {
+                jq("#del_reservation_btn").show();
+                jq("#edit_reservation_btn").show();
+            }
+
+            jq(".id").val(`${id}`);
+            jq(".room-name").val(`${room}`);
+            jq(".start-time").val(`${start} - ${end}`);
+            jq(".team-name").val(`${team}`).data({ team: team });
 
             jq("#detail_reservation_content").data({
                 id: id,
@@ -164,9 +174,10 @@ const reserveModule = ((jq) => {
             room_name: room_name,
             team_name: team_name,
             book_date: book_date,
-            start_time: `${start_time}:00`,
-            end_time: `${end_time}:00`,
+            start_time: `${start_time}`,
+            end_time: `${end_time}`,
         });
+        console.log("updatedata:", data);
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: url,
@@ -321,7 +332,8 @@ const reserveModule = ((jq) => {
         });
 
         // 예약하기 버튼 클릭 이벤트
-        jq("#reserve_btn").on("click", async function () {
+        jq("#reserve_btn").on("click", async function (e) {
+            e.preventDefault();
             const room = jq("#room_select .dropdown-item.active").data("value");
             const team = jq("#team_select .dropdown-item.active").data("value");
             const datePicker = jq("#reservation_date").data("DateTimePicker");
@@ -362,7 +374,8 @@ const reserveModule = ((jq) => {
         });
 
         // 드롭다운 선택 이벤트
-        jq("#room_select .dropdown-item").on("click", function () {
+        jq("#room_select .dropdown-item").on("click", function (e) {
+            e.preventDefault();
             const roomText = jq(this).text();
             jq("#room_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
@@ -370,14 +383,16 @@ const reserveModule = ((jq) => {
             jq("#select_room_btn").text(roomText);
         });
 
-        jq("#team_select .dropdown-item").on("click", function () {
+        jq("#team_select .dropdown-item").on("click", function (e) {
+            e.preventDefault(0);
             const teamText = jq(this).text();
             jq("#team_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
             console.log("teamText:", teamText);
             jq("#team_select_btn").text(teamText);
         });
-        jq("#login_team_select .dropdown-item").on("click", function () {
+        jq("#login_team_select .dropdown-item").on("click", function (e) {
+            e.preventDefault();
             const teamText = jq(this).text();
             jq("#login_team_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
@@ -409,7 +424,8 @@ const reserveModule = ((jq) => {
         });
 
         // 예약 삭제 버튼 클릭 이벤트
-        jq("#del_reservation_btn").on("click", async function () {
+        jq("#del_reservation_btn").on("click", async function (e) {
+            e.preventDefault();
             const id = jq("#detail_reservation_content").data("id");
             const reservationTeam = jq("#detail_reservation_content").data(
                 "team"
@@ -439,6 +455,47 @@ const reserveModule = ((jq) => {
 
             // 새로운 예약 데이터로 업데이트
             reserveModule.load(date);
+        });
+        // 수정하기 버튼 클릭 이벤트
+        jq(document).on("click", "#edit_reservation_btn", function (e) {
+            e.preventDefault();
+            // 모든 input 필드에서 readonly 속성을 제거하여 수정 가능하게 함
+            jq(".detail_reservation_item").prop("readonly", false);
+
+            // 버튼 텍스트를 "저장하기"로 변경하고, id를 save_reservation_btn으로 변경
+            jq(this).text("저장하기").attr("id", "save_reservation_btn");
+        });
+
+        // 저장하기 버튼 클릭 이벤트
+        jq(document).on("click", "#save_reservation_btn", async function (e) {
+            e.preventDefault();
+            const id = jq(".id").val();
+            const roomName = jq(".room-name").val();
+            const timeRange = jq(".start-time").val(); // e.g., "16:00:00-19:00:00"
+            const [startTime, endTime] = timeRange
+                .split("-")
+                .map((time) => time.trim()); // Split and trim
+            const teamName = jq(".team-name").val();
+
+            // 서버에 수정된 내용을 보내는 함수 호출
+            try {
+                await updateReservationData({
+                    id,
+                    room_name: roomName,
+                    start_time: startTime,
+                    end_time: endTime,
+                    team_name: teamName,
+                    book_date: _searchDate,
+                });
+
+                // 요청이 성공하면 다시 모든 input 필드를 readonly 상태로 전환
+                jq(".detail_reservation_item").prop("readonly", true);
+
+                // 버튼 텍스트를 "수정하기"로 변경하고, id를 다시 edit_reservation_btn으로 변경
+                jq(this).text("수정하기").attr("id", "edit_reservation_btn");
+            } catch (error) {
+                alert("수정하는데 오류가 발생했습니다.");
+            }
         });
 
         // jq("#edit_reservation_btn").on("click", async function () {
@@ -577,17 +634,18 @@ const reserveModule = ((jq) => {
             });
 
             // 예약된 슬롯 클릭 이벤트 처리
-            jq(".reserved").on("click", function () {
+            jq(".reserved").on("click", function (e) {
+                e.preventDefault();
                 const id = jq(this).data("id");
                 const room = jq(this).data("room");
                 const start = jq(this).data("start");
                 const end = jq(this).data("end");
                 const team = jq(this).data("team");
 
-                jq(".id").text(`예약 id: ${id}`);
-                jq(".room-name").text(`회의실: ${room}`);
-                jq(".start-time").text(`시간: ${start} - ${end}`);
-                jq(".team-name").text(`팀: ${team}`).data({ team: team });
+                jq(".id").val(`${id}`);
+                jq(".room-name").val(`${room}`);
+                jq(".start-time").val(`${start} - ${end}`);
+                jq(".team-name").val(`${team}`).data({ team: team });
 
                 jq("#detail_reservation_content").data({
                     id: id,

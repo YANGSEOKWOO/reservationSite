@@ -41,3 +41,12 @@ table {
     position: relative;
     right: 28px;
 }
+
+.end-time {
+    display: none;
+}
+
+.detail_reservation_item {
+    border: none;
+    margin-top: 6px;
+}
