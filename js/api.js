@@ -26,14 +26,14 @@ const teamColors = {
 
 const reserveModule = ((jq) => {
     let _pubFn = {};
-    let reservationData;
+    let isEditing = false;
     const DateTime = luxon.DateTime;
     const today = DateTime.now();
     const todayFormatted = today.toFormat("yyyy-MM-dd");
 
     let _searchDate = todayFormatted;
 
-    const baseurl = "http://127.0.0.1:8000";
+    const baseurl = "http://127.0.0.1:8006";
 
     /**
      *
@@ -44,14 +44,30 @@ const reserveModule = ((jq) => {
         return parseInt(hours) + parseInt(minutes) / 60;
     };
 
+    const getMeetingRooms = () => {
+        const url = `${baseurl}/api/reservation/meetingrooms/list`;
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                type: "GET",
+                url: url,
+            })
+                .done((response) => {
+                    resolve(response);
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
+
     /**
-     * 예약정보를 가져오는 함수 (지금은 목업데이터)
+     * 예약정보를 가져오는 함수
      * @param {*} param0
      * @returns
      */
     const getReservationData = ({ date }) => {
         console.log("date", date);
-        const url = `http://127.0.0.1:8005/api/reservation/list?book_date=${date}`;
+        const url = `${baseurl}/api/reservation/list?book_date=${date}`;
         return new Promise((resolve, reject) => {
             jq("#loader").show();
             jq.ajax({
@@ -75,23 +91,6 @@ const reserveModule = ((jq) => {
      */
     const displayReservationData = ({ reservationData }) => {
         console.log("reservationData:", reservationData);
-        let rows = "";
-        const existingRooms = {};
-
-        // 회의실 세팅
-        reservationData.forEach((data) => {
-            if (!existingRooms[data.room]) {
-                existingRooms[
-                    data.room
-                ] = `<tr data-room="${data.room}"><td><span>${data.room}</span></td>`;
-                for (let i = 8; i <= 19; i++) {
-                    existingRooms[data.room] += `<td></td>`;
-                }
-                existingRooms[data.room] += `</tr>`;
-            }
-        });
-
-        jq(".reserve-items").html(Object.values(existingRooms).join(""));
 
         // Slot 세팅
         reservationData.forEach((data) => {
@@ -102,7 +101,9 @@ const reserveModule = ((jq) => {
                 if (i >= start && i < end) {
                     roomRow
                         .eq(i - 7)
-                        .addClass("reserved")
+                        .addClass(
+                            `reserved data-bs-toggle="tooltip" data-bs-title=${data.team}`
+                        )
                         .css("background-color", teamColors[data.team])
                         .data({
                             id: data.id,
@@ -143,13 +144,43 @@ const reserveModule = ((jq) => {
             jq("#detail_reservation_modal").modal("show");
         });
     };
-
+    const updateReservationData = ({
+        id,
+        room_name,
+        start_time,
+        end_time,
+        book_date,
+        team_name,
+    }) => {
+        const url = `${baseurl}/api/reservation/update/${id}`;
+        const data = JSON.stringify({
+            room_name: room_name,
+            team_name: team_name,
+            book_date: book_date,
+            start_time: `${start_time}:00`,
+            end_time: `${end_time}:00`,
+        });
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                url: url,
+                type: "PUT",
+                data: data,
+                contentType: "application/json",
+            })
+                .done((response) => {
+                    alert("수정이 완료되었습니다.");
+                    resolve();
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
     const deleteReservationData = ({ id }) => {
         return new Promise((resolve, reject) => {
             jq.ajax({
-                url: baseurl + "/api/reservation/delete", // API 엔드포인트
+                url: baseurl + `/api/reservation/delete/${id}`, // API 엔드포인트
                 type: "DELETE",
-                data: { id: id },
             })
                 .done(() => {
                     alert("삭제가 완료되었습니다.");
@@ -170,7 +201,7 @@ const reserveModule = ((jq) => {
     }) => {
         console.log("createReservation called"); // 함수가 호출되었는지 확인
 
-        const url = `http://127.0.0.1:8005/api/reservation/create`;
+        const url = `${baseurl}/api/reservation/create`;
         const formattedStartTime = `${start_time}:00`;
         const formattedEndTime = `${end_time}:00`;
         const data = JSON.stringify({
@@ -229,8 +260,8 @@ const reserveModule = ((jq) => {
     };
 
     _pubFn.load = async () => {
-        reservationData = await getReservationData({ date: _searchDate });
-        console.log("reservation data:", reservationData);
+        await reserveModule.loadMeetingRooms();
+        const reservationData = await getReservationData({ date: _searchDate });
         displayReservationData({ reservationData: reservationData });
     };
 
@@ -291,12 +322,6 @@ const reserveModule = ((jq) => {
                 return;
             }
 
-            // 예약 데이터 추가
-            // const newId = Object.values(mockData).flat().length + 1;
-            // if (!mockData[date]) {
-            //     mockData[date] = [];
-            // }
-            // mockData[date].push({ id: newId, room, start, end, team });
             try {
                 await createReservation({
                     room_name: room,
@@ -364,7 +389,7 @@ const reserveModule = ((jq) => {
         });
 
         // 예약 삭제 버튼 클릭 이벤트
-        jq("#del_reservation_btn").on("click", function () {
+        jq("#del_reservation_btn").on("click", async function () {
             const id = jq("#detail_reservation_content").data("id");
             const reservationTeam = jq("#detail_reservation_content").data(
                 "team"
@@ -383,9 +408,11 @@ const reserveModule = ((jq) => {
             }
 
             const date = _searchDate;
-            mockData[date] = mockData[date].filter(
-                (reservation) => reservation.id !== id
-            );
+            try {
+                await deleteReservationData({ id: id });
+            } catch (error) {
+                alert("데이터를 삭제하는데 오류가 발생했습니다.");
+            }
 
             // 모달 닫기
             jq("#detail_reservation_modal").modal("hide");
@@ -394,12 +421,167 @@ const reserveModule = ((jq) => {
             reserveModule.load(date);
         });
 
+        // jq("#edit_reservation_btn").on("click", async function () {
+        //     const reservationTeam = jq(".team-name").data("team");
+        //     const urlParams = new URLSearchParams(window.location.search);
+        //     const currentTeam = urlParams.get("team");
+        //     console.log("currentTeam:", currentTeam);
+        //     console.log("reservationTeam:", reservationTeam);
+        //     if (reservationTeam !== currentTeam) {
+        //         alert("수정 권한이 없습니다.");
+        //         return;
+        //     }
+        //     if (!isEditing) {
+        //         jq(".id").replaceWith(
+        //             `<input class="id form-control" value="${jq(
+        //                 ".id"
+        //             ).text()}" disabled />`
+        //         );
+        //         jq(".room-name").replaceWith(
+        //             `<input class="room-name form-control" value="${jq(
+        //                 ".room-name"
+        //             ).text()}" />`
+        //         );
+        //         jq(".start-time").replaceWith(
+        //             `<input class="start-time form-control" value="${jq(
+        //                 ".start-time"
+        //             ).text()}" />`
+        //         );
+        //         jq(".end-time").replaceWith(
+        //             `<input class="end-time form-control" value="${jq(
+        //                 ".end-time"
+        //             ).text()}" />`
+        //         );
+        //         jq(".team-name").replaceWith(
+        //             `<input class="team-name form-control" value="${jq(
+        //                 ".team-name"
+        //             ).text()}" />`
+        //         );
+
+        //         jq(this).text("저장");
+        //         isEditing = true;
+        //     } else {
+        //         const id = jq(".id").val();
+        //         const roomName = jq(".room-name").val();
+        //         const startTime = jq(".start-time").val();
+        //         const endTime = jq(".end-time").val();
+        //         const teamName = jq(".team-name").val();
+
+        //         // 서버에 수정된 내용을 보내는 함수 호출
+        //         try {
+        //             await updateReservationData({
+        //                 id,
+        //                 room_name: roomName,
+        //                 start_time: startTime,
+        //                 end_time: endTime,
+        //                 team_name: teamName,
+        //                 book_date: _searchDate,
+        //             });
+        //         } catch (error) {
+        //             alert("수정하는데 오류가 발생했습니다.");
+        //             return;
+        //         }
+
+        //         jq(".id").replaceWith(`<p class="id">${id}</p>`);
+        //         jq(".room-name").replaceWith(
+        //             `<p class="room-name">${roomName}</p>`
+        //         );
+        //         jq(".start-time").replaceWith(
+        //             `<p class="start-time">${startTime}</p>`
+        //         );
+        //         jq(".end-time").replaceWith(
+        //             `<p class="end-time">${endTime}</p>`
+        //         );
+        //         jq(".team-name").replaceWith(
+        //             `<p class="team-name">${teamName}</p>`
+        //         );
+
+        //         jq(this).text("수정하기");
+        //         isEditing = false;
+        //     }
+        // });
+
         /**
          * urlquery로 로그인 상태를 확인
          * 로그인 => username과 team을 띄운다.
          * 로그아웃 => 로그인 폼을 띄운다.
          *
          */
+    };
+    _pubFn.loadMeetingRooms = async () => {
+        try {
+            const meetingRooms = await getMeetingRooms();
+            const roomRows = {};
+            meetingRooms.forEach((room) => {
+                roomRows[
+                    room.name
+                ] = `<tr data-room="${room.name}"><td><span>${room.name}</span></td>`;
+                for (let i = 8; i <= 19; i++) {
+                    roomRows[room.name] += `<td></td>`;
+                }
+                roomRows[room.name] += `</tr>`;
+            });
+
+            jq(".reserve-items").html(Object.values(roomRows).join(""));
+        } catch (error) {
+            console.error(
+                "회의실 목록을 불러오는데 오류가 발생했습니다:",
+                error
+            );
+        }
+    };
+    _pubFn.loadReservationSlots = async () => {
+        try {
+            const reservationData = await getReservationData(_searchDate);
+
+            // 예약 슬롯 정보 추가
+            reservationData.forEach((data) => {
+                const start = timeToNum(data.start_time);
+                const end = timeToNum(data.end_time);
+                const roomRow = jq(`tr[data-room='${data.room}'] td`);
+                for (let i = 8; i <= 19; i++) {
+                    if (i >= start && i < end) {
+                        roomRow
+                            .eq(i - 7)
+                            .addClass("reserved")
+                            .css("background-color", teamColors[data.team])
+                            .data({
+                                id: data.id,
+                                room: data.room,
+                                start: data.start_time,
+                                end: data.end_time,
+                                team: data.team,
+                            });
+                    }
+                }
+            });
+
+            // 예약된 슬롯 클릭 이벤트 처리
+            jq(".reserved").on("click", function () {
+                const id = jq(this).data("id");
+                const room = jq(this).data("room");
+                const start = jq(this).data("start");
+                const end = jq(this).data("end");
+                const team = jq(this).data("team");
+
+                jq(".id").text(`예약 id: ${id}`);
+                jq(".room-name").text(`회의실: ${room}`);
+                jq(".start-time").text(`시간: ${start} - ${end}`);
+                jq(".team-name").text(`팀: ${team}`).data({ team: team });
+
+                jq("#detail_reservation_content").data({
+                    id: id,
+                    room: room,
+                    start: start,
+                    end: end,
+                    team: team,
+                });
+
+                jq("#detail_reservation_modal").modal("show");
+            });
+        } catch (error) {
+            console.error("예약 정보를 불러오는데 오류가 발생했습니다:", error);
+        }
     };
     _pubFn.checkLoginStatus = () => {
         const urlParams = new URLSearchParams(window.location.search);
