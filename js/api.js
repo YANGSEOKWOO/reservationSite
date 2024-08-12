@@ -710,6 +710,7 @@ const reserveModule = ((jq) => {
      *
      */
     _pubFn.loadMeetingRooms = async () => {
+        jq("#loader").show();
         try {
             _meetingRooms = await getMeetingRooms();
             const roomRows = {};
@@ -717,7 +718,7 @@ const reserveModule = ((jq) => {
             _meetingRooms.forEach((room) => {
                 roomRows[
                     room.name
-                ] = `<tr data-room="${room.name}"><td><span>${room.name}</span></td>`;
+                ] = `<tr data-room="${room.name}"><td style="pointer-events: none; cursor: not-allowed;"><span>${room.name}</span></td>`;
                 for (let i = 8; i <= 19; i++) {
                     roomRows[room.name] += `<td></td>`;
                 }
