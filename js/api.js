@@ -1,19 +1,5 @@
 const jq = $.noConflict();
 
-// 특정 날짜에 해당하는 data 반환
-const mockData = {
-    "2024-08-07": [
-        { id: 1, room: 1, start: "10:00", end: "12:00", team: "cloudTech" },
-        { id: 2, room: 2, start: "14:00", end: "16:00", team: "payRoll" },
-        { id: 3, room: 3, start: "09:00", end: "11:00", team: "marketing" },
-    ],
-    "2024-08-08": [
-        { id: 4, room: 1, start: "11:00", end: "13:00", team: "hr" },
-        { id: 5, room: 2, start: "12:00", end: "14:00", team: "devOps" },
-        { id: 6, room: 3, start: "15:00", end: "17:00", team: "finance" },
-    ],
-};
-
 // 팀 색상 매핑
 const teamColors = {
     cloudTech: "#007bff",
@@ -26,8 +12,11 @@ const teamColors = {
 
 const reserveModule = ((jq) => {
     let _pubFn = {};
-    let isEditing = false;
     let _reservationData;
+    let _meetingRooms;
+    let _selectedCells = [];
+    let isMouseDown = false;
+    let startCellIndex = null;
     const DateTime = luxon.DateTime;
     const today = DateTime.now();
     const todayFormatted = today.toFormat("yyyy-MM-dd");
@@ -41,11 +30,14 @@ const reserveModule = ((jq) => {
      * Time 데이터를 Number로 바꾸는 함수
      */
     const timeToNum = (time) => {
-        console.log("문제의 시발점:", time);
         const [hours, minutes] = time.split(":");
         return parseInt(hours) + parseInt(minutes) / 60;
     };
 
+    /**
+     * 회의실을 가져오는 함수
+     * @returns {Promise} 회의실을 리턴
+     */
     const getMeetingRooms = () => {
         const url = `${baseurl}/api/reservation/meetingrooms/list`;
         return new Promise((resolve, reject) => {
@@ -123,7 +115,6 @@ const reserveModule = ((jq) => {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
-        // TODO:: Check
         jq(".reserved").on("click", function () {
             const id = jq(this).data("id");
             const room = jq(this).data("room");
@@ -131,6 +122,7 @@ const reserveModule = ((jq) => {
             const end = jq(this).data("end");
             const team = jq(this).data("team");
 
+            // 본인의 팀이 아니라면, 삭제와 수정이 불가능
             const urlParams = new URLSearchParams(window.location.search);
             const currentTeam = urlParams.get("team");
             if (currentTeam !== team) {
@@ -250,12 +242,10 @@ const reserveModule = ((jq) => {
                 contentType: "application/json",
             })
                 .done((response) => {
-                    console.log("시도했음");
                     alert("예약이 완료되었습니다.");
                     resolve(response);
                 })
                 .fail((error) => {
-                    console.log("실패했음");
                     reject(error);
                 });
         });
@@ -354,6 +344,8 @@ const reserveModule = ((jq) => {
             const date = datePicker.date().format("YYYY-MM-DD");
             const start = fromPicker.date().format("HH:mm");
             const end = toPicker.date().format("HH:mm");
+            console.log("start:", start);
+            console.log("end:", end);
 
             if (!isTimeSlotAvailable(date, room, start, end)) {
                 alert("이미 예약된 시간이 있습니다.");
@@ -380,21 +372,20 @@ const reserveModule = ((jq) => {
         });
 
         // 드롭다운 선택 이벤트
-        jq("#room_select .dropdown-item").on("click", function (e) {
+        jq(document).on("click", "#room_select .dropdown-item", function (e) {
             e.preventDefault();
             const roomText = jq(this).text();
             jq("#room_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
-            console.log("roomtext", roomText);
             jq("#select_room_btn").text(roomText);
         });
 
-        jq("#team_select .dropdown-item").on("click", function (e) {
-            e.preventDefault(0);
+        // 팀 선택
+        jq(document).on("click", "#team_select .dropdown-item", function (e) {
+            e.preventDefault();
             const teamText = jq(this).text();
             jq("#team_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
-            console.log("teamText:", teamText);
             jq("#team_select_btn").text(teamText);
         });
         jq("#login_team_select .dropdown-item").on("click", function (e) {
@@ -429,15 +420,16 @@ const reserveModule = ((jq) => {
             window.location.href = window.location.pathname;
         });
 
-        // 예약 삭제 버튼 클릭 이벤트
+        /**
+         * 예약 삭제 이벤트
+         *
+         */
         jq("#del_reservation_btn").on("click", async function (e) {
             e.preventDefault();
             const id = jq("#detail_reservation_content").data("id");
             const reservationTeam = jq("#detail_reservation_content").data(
                 "team"
             );
-            console.log("id", id);
-            console.log("reservation", reservationTeam);
 
             const urlParams = new URLSearchParams(window.location.search);
             const currentTeam = urlParams.get("team");
@@ -462,25 +454,25 @@ const reserveModule = ((jq) => {
             // 새로운 예약 데이터로 업데이트
             reserveModule.load(date);
         });
-        // 수정하기 버튼 클릭 이벤트
+
+        /**
+         * 수정하기 (버튼 클릭 이벤트)
+         */
         jq(document).on("click", "#edit_reservation_btn", function (e) {
             e.preventDefault();
             jq(".detail_reservation_item").prop("readonly", false);
 
-            // 회의실 필드를 드롭다운으로 변경하고 기본값을 설정
+            // 현재 선택된 회의실 값
             const currentRoom = jq(".room-name").val();
-            const roomOptions = `
-        <select class="form-control detail_reservation_item room-name">
-            <option value="Conference Room A" ${
-                currentRoom === "Conference Room A" ? "selected" : ""
-            }>Conference Room A</option>
-            <option value="Conference Room B" ${
-                currentRoom === "Conference Room B" ? "selected" : ""
-            }>Conference Room B</option>
-            <option value="Conference Room C" ${
-                currentRoom === "Conference Room C" ? "selected" : ""
-            }>Conference Room C</option>
-        </select>`;
+
+            // 회의실 옵션 동적 생성 및 기본값 설정
+            let roomOptions = `<select class="form-control detail_reservation_item room-name">`;
+            _meetingRooms.forEach((room) => {
+                roomOptions += `<option value="${room.name}" ${
+                    currentRoom === room.name ? "selected" : ""
+                }>${room.name}</option>`;
+            });
+            roomOptions += `</select>`;
             jq(".room-name").replaceWith(roomOptions);
 
             // 시간 필드를 datetimepicker로 변경하고 기본값을 설정
@@ -582,19 +574,132 @@ const reserveModule = ((jq) => {
                 alert("수정하는데 오류가 발생했습니다.");
             }
         });
+        // Add the event listener for the bi-caret-left icon
+        jq(".bi-caret-left").on("mousedown", function () {
+            jq(this)
+                .removeClass("bi-caret-left")
+                .addClass("bi-caret-left-fill");
 
-        /**
-         * urlquery로 로그인 상태를 확인
-         * 로그인 => username과 team을 띄운다.
-         * 로그아웃 => 로그인 폼을 띄운다.
-         *
-         */
+            // Decrement the date by one day
+            let currentDate = jq("#date_select").data("DateTimePicker").date();
+            if (currentDate) {
+                let newDate = currentDate.subtract(1, "days");
+                jq("#date_select").data("DateTimePicker").date(newDate);
+            }
+        });
+
+        jq(".bi-caret-left").on("mouseup mouseleave", function () {
+            jq(this)
+                .removeClass("bi-caret-left-fill")
+                .addClass("bi-caret-left");
+        });
+
+        // Add the event listener for the bi-caret-right icon
+        jq(".bi-caret-right").on("mousedown", function () {
+            jq(this)
+                .removeClass("bi-caret-right")
+                .addClass("bi-caret-right-fill");
+
+            // Increment the date by one day
+            let currentDate = jq("#date_select").data("DateTimePicker").date();
+            if (currentDate) {
+                let newDate = currentDate.add(1, "days");
+                jq("#date_select").data("DateTimePicker").date(newDate);
+            }
+        });
+
+        jq(".bi-caret-right").on("mouseup mouseleave", function () {
+            jq(this)
+                .removeClass("bi-caret-right-fill")
+                .addClass("bi-caret-right");
+        });
+        jq(document).on("mousedown", ".reserve-items td", function (e) {
+            if (jq(this).hasClass("reserved")) return; // 예약된 셀은 무시
+
+            isMouseDown = true;
+            startCellIndex = jq(this).index();
+            _selectedCells.push(jq(this));
+
+            jq(this).addClass("select"); // 시각적 강조
+
+            return false; // 텍스트 드래그 방지
+        });
+
+        jq(document).on("mouseover", ".reserve-items td", function (e) {
+            if (isMouseDown) {
+                const cellIndex = jq(this).index();
+
+                if (
+                    cellIndex >= startCellIndex &&
+                    !jq(this).hasClass("reserved")
+                ) {
+                    _selectedCells.push(jq(this));
+                    jq(this).addClass("select"); // 시각적 강조
+                }
+            }
+        });
+
+        jq(document).on("mouseup", function (e) {
+            const target = jq(e.target);
+            const tdElement = target.closest(".reserve-items td");
+            const roomName = tdElement.closest("tr").data("room");
+
+            if (isMouseDown) {
+                isMouseDown = false;
+
+                if (_selectedCells.length > 0) {
+                    const startTime = calculateTime(_selectedCells[0].index());
+                    const endTime = calculateTime(
+                        _selectedCells[_selectedCells.length - 1].index() + 1
+                    );
+                    showReservationModal(startTime, endTime, roomName);
+                }
+
+                // 선택한 셀 초기화
+                _selectedCells.forEach((cell) => cell.removeClass("select"));
+                _selectedCells = [];
+            }
+        });
+
+        // 예약 모달을 표시하는 함수
+        function showReservationModal(startTime, endTime, roomName) {
+            // 모달에 선택된 시간 기본값 설정
+            jq("#reservation_from")
+                .data("DateTimePicker")
+                .date(moment(startTime, "HH:mm"));
+            jq("#reservation_to")
+                .data("DateTimePicker")
+                .date(moment(endTime, "HH:mm"));
+            jq("#reservation_date")
+                .data("DateTimePicker")
+                .date(moment(_searchDate, "YYYY-MM-DD"));
+            const matchingItem = jq("#room_select .dropdown-item").filter(
+                function () {
+                    return jq(this).data("value") === roomName;
+                }
+            );
+            matchingItem.addClass("active");
+            jq("#select_room_btn").text(roomName);
+
+            // 모달 띄우기
+            jq("#reservation_modal").modal("show");
+        }
+        function calculateTime(cellIndex) {
+            const baseHour = 7; // 기본 시작 시간은 08:00
+            const hour = baseHour + cellIndex;
+            return hour < 10 ? `0${hour}:00` : `${hour}:00`;
+        }
     };
+    /**
+     * 회의실을 가져오고, 그 회의실에 맞게 table의 row를 추가한다
+     *
+     */
     _pubFn.loadMeetingRooms = async () => {
         try {
-            const meetingRooms = await getMeetingRooms();
+            _meetingRooms = await getMeetingRooms();
             const roomRows = {};
-            meetingRooms.forEach((room) => {
+            jq("#room_select").empty();
+            _meetingRooms.forEach((room) => {
                 roomRows[
                     room.name
                 ] = `<tr data-room="${room.name}"><td><span>${room.name}</span></td>`;
@@ -602,6 +707,10 @@ const reserveModule = ((jq) => {
                     roomRows[room.name] += `<td></td>`;
                 }
                 roomRows[room.name] += `</tr>`;
+
+                jq("#room_select")
+                    .append(`<li><a class="dropdown-item" href="#" data-value="${room.name}">${room.name}</a></li>
+                    `);
             });
 
             jq(".reserve-items").html(Object.values(roomRows).join(""));
@@ -612,6 +721,11 @@ const reserveModule = ((jq) => {
             );
         }
     };
+    /**
+     * urlParam에 username과 team에 있다면, 로그인 된 것으로 간주하고 화면표시
+     * 로그인 => username과 team을 띄운다.
+     * 로그아웃 => 로그인 폼을 띄운다.
+     */
     _pubFn.checkLoginStatus = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const username = urlParams.get("username");

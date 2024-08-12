@@ -47,6 +47,7 @@
     <!-- Custom Styles -->
     <link rel="stylesheet" href="./style.css">
     <script src="./js/api.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <title>회의실 예약 시스템</title>
     <style></style>
@@ -87,14 +88,16 @@
         <h4 id="welcome_message"></h4>
         <button type="button" class="btn btn-primary" id="logout_btn">로그아웃</button>
     </div>
-    <div class="top-container d-flex justify-content-between ">
-        <div class="time-container middle-css" style="position: relative;">
-            <label for="date_select" style="text-wrap: nowrap;">예약 날짜:</label>
-            <input id="date_select" class="form-control" type="text" />
-        </div>
+    <div class="time-container middle-css">
+        <i class="bi bi-caret-left h1"></i>
+        <input id="date_select" class="form-control" type="text" style="max-width:120px;" />
+        <i class="bi bi-caret-right h1"></i>
+    </div>
+    <div class="button-container">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_meetingroom_modal">회의실
+            추가하기</button>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
             data-bs-target="#reservation_modal">예약하기</button>
-
     </div>
 
     <div class="reservation-container">
@@ -102,18 +105,18 @@
             <thead>
                 <tr>
                     <th scope="col">회의실</th>
-                    <th class="timeline" scope="col">08:00</th>
-                    <th class="timeline" scope="col">09:00</th>
-                    <th class="timeline" scope="col">10:00</th>
-                    <th class="timeline" scope="col">11:00</th>
-                    <th class="timeline" scope="col">12:00</th>
-                    <th class="timeline" scope="col">13:00</th>
-                    <th class="timeline" scope="col">14:00</th>
-                    <th class="timeline" scope="col">15:00</th>
-                    <th class="timeline" scope="col">16:00</th>
-                    <th class="timeline" scope="col">17:00</th>
-                    <th class="timeline" scope="col">18:00</th>
-                    <th class="timeline" scope="col">19:00</th>
+                    <th data-time="08:00" class="timeline" scope="col">08:00</th>
+                    <th data-time="09:00" class="timeline" scope="col">09:00</th>
+                    <th data-time="10:00" class="timeline" scope="col">10:00</th>
+                    <th data-time="11:00" class="timeline" scope="col">11:00</th>
+                    <th data-time="12:00" class="timeline" scope="col">12:00</th>
+                    <th data-time="13:00" class="timeline" scope="col">13:00</th>
+                    <th data-time="14:00" class="timeline" scope="col">14:00</th>
+                    <th data-time="15:00" class="timeline" scope="col">15:00</th>
+                    <th data-time="16:00" class="timeline" scope="col">16:00</th>
+                    <th data-time="17:00" class="timeline" scope="col">17:00</th>
+                    <th data-time="18:00" class="timeline" scope="col">18:00</th>
+                    <th data-time="19:00" class="timeline" scope="col">19:00</th>
                 </tr>
             </thead>
             <tbody class="reserve-items">
@@ -144,12 +147,6 @@
                                 <button class="btn btn-primary dropdown-toggle" type="button" id="select_room_btn"
                                     data-bs-toggle="dropdown">회의실 선택</button>
                                 <ul class="dropdown-menu" id="room_select">
-                                    <li><a class="dropdown-item" href="#" data-value="Conference Room A">Conference Room
-                                            A</a></li>
-                                    <li><a class="dropdown-item" href="#" data-value="Conference Room B">Conference Room
-                                            B</a></li>
-                                    <li><a class="dropdown-item" href="#" data-value="Conference Room C">Conference Room
-                                            C</a></li>
                                 </ul>
                             </div>
                             <!-- 팀 선택 -->
@@ -167,17 +164,22 @@
                             </div>
                         </div>
                         <!-- 예약 날짜 설정 -->
-                        <label for="reservation_date" style="text-wrap: nowrap;">예약 날짜:</label>
-                        <input id="reservation_date" class="form-control reservation-date" type="text" />
+                        <p>예약 날짜를 선택해 주세요</p>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-success text-white">예약날짜</span>
+                            <input id="reservation_date" class="form-control reservation-date" type="text" />
+                        </div>
 
                         <!-- 예약 시간 설정 -->
-                        <p>예약시간</p>
-                        <div class="time-select d-flex justify-content-center align-items-center gap-2">
-                            <label for="reservation_from" style="text-wrap: nowrap;">From</label>
-                            <input id="reservation_from" class="form-control reservation-date" type="text" />
-                            <label for="reservation_to" style="text-wrap: nowrap;">To</label>
-                            <input id="reservation_to" class="form-control reservation-date" type="text" />
+                        <p>예약 시간을 선택해 주세요</p>
+                        <div class="input-group time-select">
+                            <span class="input-group-text">Time</span>
+                            <input id="reservation_from" class="form-control reservation-date" type="text"
+                                aria-level="start-date" />
+                            <input id="reservation_to" class="form-control reservation-date" type="text"
+                                aria-level="end-date" />
                         </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -221,6 +223,29 @@
             </div>
         </div>
     </div>
+    <!-- #add_meetingroom_modal -->
+    <div class="modal fade" id="add_meetingroom_modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="add_meetingroom_modal_label">회의실추가</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body input-group">
+                    <div class="modal-body">
+                        <label for="meetingroom_name" style="text-wrap: nowrap;">From</label>
+                        <input id="meetingroom_name" class="form-control" type="text" />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary">추가하기</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
 
     </script>

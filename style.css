@@ -1,5 +1,11 @@
+@import url("https://static.toss.im/tps/main.css");
+@import url("https://static.toss.im/tps/others.css");
+
+* {
+    font-family: "Toss Product Sans";
+}
+
 body {
-    font-family: tahoma, verdana, helvetica;
     font-size: 0.8em;
     padding: 10px;
 }
@@ -49,4 +55,30 @@ table {
 
 .id {
     border: none;
+}
+
+.bi {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+#date_select {
+    border: 1px solid;
+    position: relative;
+    max-width: 120px;
+}
+
+.time-container {
+    position: relative; /* 부모 컨테이너에 position 설정 */
+}
+
+.button-container {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 6px;
+}
+
+.select {
+    background-color: #d1e7dd !important;
 }
