@@ -252,10 +252,10 @@ const reserveModule = ((jq) => {
     };
     /**
      * 예약할 때, 자리가 비었는지 리턴하는 함수
-     * @param {*} date
-     * @param {*} room
-     * @param {*} start
-     * @param {*} end
+     * @param {*} date - 예약하고자 하는 날짜
+     * @param {*} room - 예약하고자 하는 회의실 이름
+     * @param {*} start - 예약 시작 시간
+     * @param {*} end - 예약 종료 시간
      * @param {*} excludeId - 수정 시 제외할 예약 ID
      * @returns
      */
@@ -265,19 +265,23 @@ const reserveModule = ((jq) => {
         const endTime = timeToNum(end);
 
         for (const reservation of reservations) {
+            const reservationDate = reservation.book_date; // 예약된 날짜
+            const reservationStartTime = timeToNum(reservation.start_time);
+            const reservationEndTime = timeToNum(reservation.end_time);
+
+            // 날짜가 다르거나, 수정하는 예약의 ID와 일치하는 경우는 건너뜀
             if (
                 reservation.room === room &&
+                reservationDate === date &&
                 reservation.id !== parseInt(excludeId)
             ) {
-                const existingStartTime = timeToNum(reservation.start_time);
-                const existingEndTime = timeToNum(reservation.end_time);
                 if (
-                    (startTime >= existingStartTime &&
-                        startTime < existingEndTime) ||
-                    (endTime > existingStartTime &&
-                        endTime <= existingEndTime) ||
-                    (startTime <= existingStartTime &&
-                        endTime >= existingEndTime)
+                    (startTime >= reservationStartTime &&
+                        startTime < reservationEndTime) ||
+                    (endTime > reservationStartTime &&
+                        endTime <= reservationEndTime) ||
+                    (startTime <= reservationStartTime &&
+                        endTime >= reservationEndTime)
                 ) {
                     return false;
                 }
@@ -369,6 +373,17 @@ const reserveModule = ((jq) => {
 
             // 새로운 예약 데이터로 업데이트
             reserveModule.load(date);
+        });
+
+        // 모달이 닫힐 때 모든 필드 초기화
+        jq("#reservation_modal").on("hidden.bs.modal", function () {
+            jq("#reservation_from").data("DateTimePicker").clear();
+            jq("#reservation_to").data("DateTimePicker").clear();
+            jq("#reservation_date").data("DateTimePicker").clear();
+            jq("#select_room_btn").text("회의실 선택");
+            jq("#room_select .dropdown-item").removeClass("active");
+            jq("#team_select_btn").text("팀 선택");
+            jq("#team_select .dropdown-item").removeClass("active");
         });
 
         // 드롭다운 선택 이벤트
