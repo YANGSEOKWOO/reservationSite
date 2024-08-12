@@ -196,13 +196,22 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="reservation-container" id="detail_reservation_content">
-                        <p>예약 id:</p><input class="form-control detail_reservation_item id" type="text" readonly>
-                        <p>회의실:</p><input class="form-control detail_reservation_item room-name" type="text" readonly>
-                        <p>시간:</p><input class="form-control detail_reservation_item start-time" type="text" readonly>
-                        <input class="form-control detail_reservation_item end-time" type="text" readonly>
-                        <p>팀:</p><input class="form-control detail_reservation_item team-name" type="text" readonly>
+                    <div class="modal-body">
+                        <div class="reservation-container" id="detail_reservation_content">
+                            <p>예약 id:</p><input class="form-control id" type="text" readonly>
+                            <p>회의실:</p><input class="form-control detail_reservation_item room-name" type="text"
+                                readonly>
+                            <div class="time-container">
+                                <p>시작 시간:</p><input
+                                    class="form-control detail_reservation_item start-time datetimepicker" type="text"
+                                    readonly>
+                                <p>종료 시간:</p><input class="form-control detail_reservation_item end-time datetimepicker"
+                                    type="text" readonly>
+                            </div>
+                            <p>팀:</p><input class="form-control detail_reservation_item team-name" type="text" readonly>
+                        </div>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="del_reservation_btn">예약 삭제하기</button>
