@@ -24,7 +24,7 @@ const reserveModule = ((jq) => {
 
     let _searchDate = todayFormatted;
 
-    const baseurl = "http://127.0.0.1:8006";
+    const baseurl = "http://127.0.0.1:8007";
 
     /**
      *
@@ -190,6 +190,29 @@ const reserveModule = ((jq) => {
                 .done((response) => {
                     alert("수정이 완료되었습니다.");
                     resolve();
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
+    /**
+     * 로그인하는 함수
+     * @param {object} LoginData
+     * @returns {Promise} 로그인 성공여부, admin 여부
+     */
+    const login = ({ loginData }) => {
+        console.log("서버에게 보내는 데이터:", loginData);
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                type: "POST",
+                url: `${baseurl}/api/user/login`,
+                dataType: "json",
+                data: JSON.stringify(loginData),
+                contentType: "application/json",
+            })
+                .done((response) => {
+                    resolve(response);
                 })
                 .fail((error) => {
                     reject(error);
@@ -418,7 +441,7 @@ const reserveModule = ((jq) => {
             jq("#login_team_select_btn").text(teamText);
         });
         // 로그인 버튼 클릭 이벤트
-        jq("#login_btn").on("click", function (e) {
+        jq("#login_btn").on("click", async function (e) {
             e.preventDefault();
             const userName = jq("#username").val();
             const password = jq("#password").val();
@@ -426,19 +449,42 @@ const reserveModule = ((jq) => {
                 "value"
             );
 
-            if (!username || !password || !team) {
+            if (!userName || !password || !team) {
                 alert("모든 필드를 채워주세요.");
                 return;
             }
 
             // 로그인 처리 (여기서는 URL 쿼리로 아이디와 팀명을 전달)
-            const queryParams = `?username=${userName}&team=${team}`;
-            window.location.href = window.location.pathname + queryParams;
+
+            const loginData = {
+                id: userName,
+                password: password,
+                team: team,
+            };
+            try {
+                const a = await login({ loginData: loginData });
+                if (a.isAdmin) {
+                    setCookie("admin", "true", 1);
+                    _pubFn.checkLoginStatus();
+                } else {
+                    const queryParams = `?username=${userName}&team=${team}`;
+                    window.location.href =
+                        window.location.pathname + queryParams;
+                }
+            } catch (error) {
+                alert("로그인 도중 문제가 발생했습니다.");
+                console.log("error:", error);
+            }
         });
 
         // 로그아웃 버튼 클릭 이벤트
         jq("#logout_btn").on("click", function (e) {
             e.preventDefault();
+            if (getCookie("admin")) {
+                deleteCookie("admin");
+                window.location.reload();
+                return;
+            }
             window.location.href = window.location.pathname;
         });
 
@@ -771,6 +817,12 @@ const reserveModule = ((jq) => {
         const userName = urlParams.get("username");
         const team = urlParams.get("team");
 
+        const isAdmin = getCookie("admin");
+        if (isAdmin) {
+            jq(".login-container").addClass("d-none");
+            jq("#welcome_message").text(`관리자계정`).css("font-size", "20px");
+            jq("#welcome_container").removeClass("d-none");
+        }
         if (userName && team) {
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(
@@ -780,6 +832,19 @@ const reserveModule = ((jq) => {
         }
     };
 
+    const setCookie = (name, value, exp) => {
+        const date = new Date();
+        date.setTime(date.getTime() + exp * 24 * 60 * 60 * 1000);
+        document.cookie =
+            name + "=" + value + ";expires" + date.toUTCString() + ";path=/";
+    };
+    const getCookie = (name) => {
+        const value = document.cookie.match("(^|;) ?" + name + "=([^;]*)(;|$)");
+        return value ? value[2] : null;
+    };
+    const deleteCookie = (name) => {
+        document.cookie = name + "=; expires=Thu, 01 Jan 1999 00:00:10 GMT;";
+    };
     return _pubFn;
 })(jq);
 
