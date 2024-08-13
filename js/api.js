@@ -17,6 +17,7 @@ const reserveModule = ((jq) => {
     let _selectedCells = [];
     let isMouseDown = false;
     let startCellIndex = null;
+    let _selectRoom;
     const DateTime = luxon.DateTime;
     const today = DateTime.now();
     const todayFormatted = today.toFormat("yyyy-MM-dd");
@@ -419,7 +420,7 @@ const reserveModule = ((jq) => {
         // 로그인 버튼 클릭 이벤트
         jq("#login_btn").on("click", function (e) {
             e.preventDefault();
-            const username = jq("#username").val();
+            const userName = jq("#username").val();
             const password = jq("#password").val();
             const team = jq("#login_team_select .dropdown-item.active").data(
                 "value"
@@ -431,7 +432,7 @@ const reserveModule = ((jq) => {
             }
 
             // 로그인 처리 (여기서는 URL 쿼리로 아이디와 팀명을 전달)
-            const queryParams = `?username=${username}&team=${team}`;
+            const queryParams = `?username=${userName}&team=${team}`;
             window.location.href = window.location.pathname + queryParams;
         });
 
@@ -636,10 +637,15 @@ const reserveModule = ((jq) => {
         });
         jq(document).on("mousedown", ".reserve-items td", function (e) {
             if (jq(this).hasClass("reserved")) return; // 예약된 셀은 무시
+            const roomName = jq(e.target)
+                .closest(".reserve-items td")
+                .closest("tr")
+                .data("room");
 
             isMouseDown = true;
             startCellIndex = jq(this).index();
             _selectedCells.push(jq(this));
+            _selectRoom = roomName;
 
             jq(this).addClass("select"); // 시각적 강조
 
@@ -647,15 +653,22 @@ const reserveModule = ((jq) => {
         });
 
         jq(document).on("mouseover", ".reserve-items td", function (e) {
+            const roomName = jq(e.target)
+                .closest(".reserve-items td")
+                .closest("tr")
+                .data("room");
             if (isMouseDown) {
                 const cellIndex = jq(this).index();
 
                 if (
                     cellIndex >= startCellIndex &&
-                    !jq(this).hasClass("reserved")
+                    !jq(this).hasClass("reserved") &&
+                    roomName === _selectRoom
                 ) {
                     _selectedCells.push(jq(this));
                     jq(this).addClass("select"); // 시각적 강조
+                } else {
+                    jq(this).css("cursor", "not-allowed"); // 커서를 "막힘"으로 변경
                 }
             }
         });
@@ -675,7 +688,7 @@ const reserveModule = ((jq) => {
                     const endTime = calculateTime(
                         _selectedCells[_selectedCells.length - 1].index() + 2
                     );
-                    showReservationModal(startTime, endTime, roomName);
+                    showReservationModal(startTime, endTime, _selectRoom);
                 }
 
                 // 선택한 셀 초기화
@@ -729,7 +742,7 @@ const reserveModule = ((jq) => {
             _meetingRooms.forEach((room) => {
                 roomRows[
                     room.name
-                ] = `<tr data-room="${room.name}"><td style="pointer-events: none; cursor: not-allowed;"><span>${room.name}</span></td>`;
+                ] = `<tr data-room="${room.name}"><td style="pointer-events: none; cursor: not-allowed; min-width:140px"><span>${room.name}</span></td>`;
                 for (let i = 5; i <= 39; i++) {
                     roomRows[room.name] += `<td></td>`;
                 }
@@ -755,13 +768,13 @@ const reserveModule = ((jq) => {
      */
     _pubFn.checkLoginStatus = () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get("username");
+        const userName = urlParams.get("username");
         const team = urlParams.get("team");
 
-        if (username && team) {
+        if (userName && team) {
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(
-                `${username}님 안녕하세요! (Team: ${team})`
+                `${userName}님 안녕하세요! (Team: ${team})`
             );
             jq("#welcome_container").removeClass("d-none");
         }
