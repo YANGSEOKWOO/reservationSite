@@ -31,7 +31,7 @@ const reserveModule = ((jq) => {
      */
     const timeToNum = (time) => {
         const [hours, minutes] = time.split(":");
-        return parseInt(hours) + parseInt(minutes) / 60;
+        return parseInt(hours) * 2 + parseInt(minutes) / 30;
     };
 
     /**
@@ -86,28 +86,34 @@ const reserveModule = ((jq) => {
     const displayReservationData = ({ reservationData }) => {
         console.log("reservationData:", reservationData);
 
-        // Slot 세팅
         reservationData.forEach((data) => {
-            const start = timeToNum(data.start_time);
-            const end = timeToNum(data.end_time);
+            const start = timeToNum(data.start_time); // 30분 단위 인덱스로 변환
+            const end = timeToNum(data.end_time); // 30분 단위 인덱스로 변환
+            console.log("data:", data);
+            console.log("start:", start);
+            console.log("end", end);
             const roomRow = jq(`tr[data-room='${data.room}'] td`);
-            for (let i = 8; i <= 19; i++) {
-                if (i >= start && i < end) {
-                    const cell = roomRow.eq(i - 7);
-                    cell.addClass("reserved")
-                        .css("background-color", teamColors[data.team])
-                        .data({
-                            id: data.id,
-                            room: data.room,
-                            start: data.start_time,
-                            end: data.end_time,
-                            team: data.team,
-                        })
-                        .attr("data-bs-toggle", "tooltip")
-                        .attr("title", data.team); // This sets the tooltip text
-                }
+
+            for (let i = start; i < end; i++) {
+                const cell = roomRow.eq(i - 9);
+                cell.addClass("reserved")
+                    .css("background-color", teamColors[data.team])
+                    .data({
+                        id: data.id,
+                        room: data.room,
+                        start: data.start_time,
+                        end: data.end_time,
+                        team: data.team,
+                    })
+                    .attr("data-bs-toggle", "tooltip")
+                    .attr(
+                        "title",
+                        `${data.team} (${data.start_time} - ${data.end_time})`
+                    );
             }
         });
+
+        // Tooltip 초기화
         const tooltipTriggerList = [].slice.call(
             document.querySelectorAll('[data-bs-toggle="tooltip"]')
         );
@@ -150,6 +156,7 @@ const reserveModule = ((jq) => {
             jq("#detail_reservation_modal").modal("show");
         });
     };
+
     /**
      * Update : 예약데이터를 업데이트하는 함수
      * @param {*} param0
@@ -265,11 +272,10 @@ const reserveModule = ((jq) => {
         const endTime = timeToNum(end);
 
         for (const reservation of reservations) {
-            const reservationDate = reservation.book_date; // 예약된 날짜
+            const reservationDate = reservation.book_date;
             const reservationStartTime = timeToNum(reservation.start_time);
             const reservationEndTime = timeToNum(reservation.end_time);
 
-            // 날짜가 다르거나, 수정하는 예약의 ID와 일치하는 경우는 건너뜀
             if (
                 reservation.room === room &&
                 reservationDate === date &&
@@ -319,7 +325,7 @@ const reserveModule = ((jq) => {
         jq("#reservation_from")
             .datetimepicker({
                 format: "HH:mm", // 시간과 분만 표시
-                stepping: 60, // 1시간 간격
+                stepping: 30, // 1시간 간격
             })
             .on("dp.change", function handleFromDateChange(e) {
                 jq("#reservation_to").data("DateTimePicker").minDate(e.date);
@@ -328,7 +334,7 @@ const reserveModule = ((jq) => {
         jq("#reservation_to").datetimepicker({
             format: "HH:mm", // 시간과 분만 표시
             showClose: false,
-            stepping: 60, // 1시간 간격
+            stepping: 30, // 1시간 간격
         });
 
         // 예약하기 버튼 클릭 이벤트
@@ -504,13 +510,13 @@ const reserveModule = ((jq) => {
 
             jq(".start-time").datetimepicker({
                 format: "HH:mm",
-                stepping: 60,
+                stepping: 30,
                 defaultDate: startTimeVal, // 기본값 설정
             });
 
             jq(".end-time").datetimepicker({
                 format: "HH:mm",
-                stepping: 60,
+                stepping: 30,
                 defaultDate: endTimeVal, // 기본값 설정
             });
 
@@ -663,9 +669,11 @@ const reserveModule = ((jq) => {
                 isMouseDown = false;
 
                 if (_selectedCells.length > 0) {
-                    const startTime = calculateTime(_selectedCells[0].index());
+                    const startTime = calculateTime(
+                        _selectedCells[0].index() + 1
+                    );
                     const endTime = calculateTime(
-                        _selectedCells[_selectedCells.length - 1].index() + 1
+                        _selectedCells[_selectedCells.length - 1].index() + 2
                     );
                     showReservationModal(startTime, endTime, roomName);
                 }
@@ -700,9 +708,12 @@ const reserveModule = ((jq) => {
             jq("#reservation_modal").modal("show");
         }
         function calculateTime(cellIndex) {
-            const baseHour = 7; // 기본 시작 시간은 08:00
-            const hour = baseHour + cellIndex;
-            return hour < 10 ? `0${hour}:00` : `${hour}:00`;
+            const baseHour = 4; // 기본 시작 시간은 04:00
+            const hour = Math.floor((baseHour * 2 + cellIndex) / 2); // cellIndex를 2로 나누어 시간을 계산
+            const minute = (cellIndex % 2) * 30; // cellIndex가 짝수면 00분, 홀수면 30분
+            return `${hour < 10 ? "0" : ""}${hour}:${
+                minute === 0 ? "00" : minute
+            }`;
         }
     };
     /**
@@ -719,7 +730,7 @@ const reserveModule = ((jq) => {
                 roomRows[
                     room.name
                 ] = `<tr data-room="${room.name}"><td style="pointer-events: none; cursor: not-allowed;"><span>${room.name}</span></td>`;
-                for (let i = 8; i <= 19; i++) {
+                for (let i = 5; i <= 39; i++) {
                     roomRows[room.name] += `<td></td>`;
                 }
                 roomRows[room.name] += `</tr>`;

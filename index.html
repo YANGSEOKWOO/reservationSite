@@ -58,43 +58,52 @@
 </head>
 
 <body>
-    <h3>회의실 예약</h3>
     <!-- 로그인 폼 추가 -->
-    <div class="login-container d-flex text-center" style="max-height: 38px;">
-        <form id="login_form" class="d-flex align-items-center gap-3 mb-3">
-            <div class=" middle-css">
-                <label for="username" class="form-label mt-2" style="min-width: 40px;">아이디</label>
-                <input type="text" class="form-control" id="username" required>
-            </div>
-            <div class="middle-css">
-                <label for="password" class="form-label mt-2" style="min-width: 60px;">비밀번호</label>
-                <input type="password" class="form-control" id="password" required>
-            </div>
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="login_team_select_btn"
-                    data-bs-toggle="dropdown">팀 선택</button>
-                <ul class="dropdown-menu" id="login_team_select">
-                    <li><a class="dropdown-item" href="#" data-value="cloudTech">cloudTech</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="payRoll">payRoll</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="marketing">marketing</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="hr">hr</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="devOps">devOps</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="finance">finance</a></li>
-                </ul>
-            </div>
-            <button type="button" class="btn btn-primary" id="login_btn">로그인</button>
-        </form>
+    <div class="header-container d-flex justify-content-between">
+        <h3>회의실 예약</h3>
+        <div class="login-container d-flex justify-content-end" style="max-height: 25px; height: 25px;">
+            <form id="login_form" class="d-flex align-items-center gap-3" style="height: 100%;">
+                <div class="middle-css gap-2" style="height: 100%;">
+                    <label for="username" class="form-label m-0"
+                        style="min-width: 40px; font-size: 15px; line-height: 25px;">아이디</label>
+                    <input type="text" class="form-control" id="username" required
+                        style="max-width: 80px; height: 25px; padding: 0; font-size: 15px; line-height: 25px;">
+                </div>
+                <div class="middle-css" style="height: 100%;">
+                    <label for="password" class="form-label m-0"
+                        style="min-width: 60px; font-size: 15px; line-height: 25px;">비밀번호</label>
+                    <input type="password" class="form-control" id="password" required
+                        style="max-width: 80px; height: 25px; padding: 0; font-size: 15px; line-height: 25px;">
+                </div>
+                <div class="dropdown" style="height: 100%;">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="login_team_select_btn"
+                        data-bs-toggle="dropdown" style="height: 25px; font-size: 15px; padding: 0 5px;">팀 선택</button>
+                    <ul class="dropdown-menu" id="login_team_select">
+                        <li><a class="dropdown-item" href="#" data-value="cloudTech">cloudTech</a></li>
+                        <li><a class="dropdown-item" href="#" data-value="payRoll">payRoll</a></li>
+                        <li><a class="dropdown-item" href="#" data-value="marketing">marketing</a></li>
+                        <li><a class="dropdown-item" href="#" data-value="hr">hr</a></li>
+                        <li><a class="dropdown-item" href="#" data-value="devOps">devOps</a></li>
+                        <li><a class="dropdown-item" href="#" data-value="finance">finance</a></li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-primary" id="login_btn"
+                    style="height: 25px; font-size: 15px; padding: 0 5px;">로그인</button>
+            </form>
+        </div>
+
+        <div class="welcome-container d-none " id="welcome_container">
+            <p id="welcome_message">
+                <p />
+                <button type="button" class="btn btn-primary" id="logout_btn">로그아웃</button>
+        </div>
     </div>
-    <div class="welcome-container d-none d-flex justify-content-between my-3" id="welcome_container">
-        <h4 id="welcome_message"></h4>
-        <button type="button" class="btn btn-primary" id="logout_btn">로그아웃</button>
-    </div>
-    <div class="time-container middle-css">
-        <i class="bi bi-caret-left h1"></i>
-        <input id="date_select" class="form-control" type="text" style="max-width:120px;" />
+    <div class="time-container middle-css m-4">
+        <i class=" bi bi-caret-left h1"></i>
+        <input id="date_select" class="form-control" type="text" style="max-width:300px; text-align: center;" />
         <i class="bi bi-caret-right h1"></i>
     </div>
-    <div class="button-container">
+    <div class="button-container mb-4 gap-2">
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_meetingroom_modal">회의실
             추가하기</button>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
@@ -106,18 +115,41 @@
             <thead>
                 <tr>
                     <th scope="col">회의실</th>
-                    <th data-time="08:00" class="timeline" scope="col">08:00</th>
-                    <th data-time="09:00" class="timeline" scope="col">09:00</th>
-                    <th data-time="10:00" class="timeline" scope="col">10:00</th>
-                    <th data-time="11:00" class="timeline" scope="col">11:00</th>
-                    <th data-time="12:00" class="timeline" scope="col">12:00</th>
-                    <th data-time="13:00" class="timeline" scope="col">13:00</th>
-                    <th data-time="14:00" class="timeline" scope="col">14:00</th>
-                    <th data-time="15:00" class="timeline" scope="col">15:00</th>
-                    <th data-time="16:00" class="timeline" scope="col">16:00</th>
-                    <th data-time="17:00" class="timeline" scope="col">17:00</th>
-                    <th data-time="18:00" class="timeline" scope="col">18:00</th>
-                    <th data-time="19:00" class="timeline" scope="col">19:00</th>
+                    <th data-time="05:00" class="timeline" scope="col">05</th>
+                    <th data-time="05:30" class="timeline" scope="col"></th>
+                    <th data-time="06:00" class="timeline" scope="col">06</th>
+                    <th data-time="06:30" class="timeline" scope="col"></th>
+                    <th data-time="07:00" class="timeline" scope="col">07</th>
+                    <th data-time="07:30" class="timeline" scope="col"></th>
+                    <th data-time="08:00" class="timeline" scope="col">08</th>
+                    <th data-time="08:30" class="timeline" scope="col"></th>
+                    <th data-time="09:00" class="timeline" scope="col">09</th>
+                    <th data-time="09:30" class="timeline" scope="col"></th>
+                    <th data-time="10:00" class="timeline" scope="col">10</th>
+                    <th data-time="10:30" class="timeline" scope="col"></th>
+                    <th data-time="11:00" class="timeline" scope="col">11</th>
+                    <th data-time="11:30" class="timeline" scope="col"></th>
+                    <th data-time="12:00" class="timeline" scope="col">12</th>
+                    <th data-time="12:30" class="timeline" scope="col"></th>
+                    <th data-time="13:00" class="timeline" scope="col">13</th>
+                    <th data-time="13:30" class="timeline" scope="col"></th>
+                    <th data-time="14:00" class="timeline" scope="col">14</th>
+                    <th data-time="14:30" class="timeline" scope="col"></th>
+                    <th data-time="15:00" class="timeline" scope="col">15</th>
+                    <th data-time="15:30" class="timeline" scope="col"></th>
+                    <th data-time="16:00" class="timeline" scope="col">16</th>
+                    <th data-time="16:30" class="timeline" scope="col"></th>
+                    <th data-time="17:00" class="timeline" scope="col">17</th>
+                    <th data-time="17:30" class="timeline" scope="col"></th>
+                    <th data-time="18:00" class="timeline" scope="col">18</th>
+                    <th data-time="18:30" class="timeline" scope="col"></th>
+                    <th data-time="19:00" class="timeline" scope="col">19</th>
+                    <th data-time="19:30" class="timeline" scope="col"></th>
+                    <th data-time="20:00" class="timeline" scope="col">20</th>
+                    <th data-time="20:30" class="timeline" scope="col"></th>
+                    <th data-time="21:00" class="timeline" scope="col">21</th>
+                    <th data-time="21:30" class="timeline" scope="col"></th>
+                    <th data-time="22:00" class="timeline" scope="col">22</th>
                 </tr>
             </thead>
             <tbody class="reserve-items">
