@@ -940,6 +940,7 @@ const reserveModule = ((jq) => {
                 await removeRoom({ roomKey: removeKey });
                 alert("회의실 삭제 완료");
                 jq("#remove_meetingroom_modal").modal("hide");
+                reserveModule.load();
             } catch (error) {
                 alert(
                     "회의실을 삭제하는데 에러가 발생했습니다. 다시 시도해주세요"
@@ -948,12 +949,12 @@ const reserveModule = ((jq) => {
             }
         });
         // 회의실 추가 버튼
-        jq("#add_meetingroom").on("click", async function () {
+        jq("#create_meetingroom").on("click", async function () {
             const roomName = jq("#meetingroom_name").val();
             try {
                 await createRoom({ roomName: roomName });
                 alert("회의실 생성이 완료되었습니다.");
-                jq("#add_meetingroom_modal").modal("hide");
+                jq("#create_meetingroom_modal").modal("hide");
                 reserveModule.load();
             } catch (error) {
                 alert("회의실 생성하는데 오류가 발생했습니다.");
@@ -1054,12 +1055,20 @@ const reserveModule = ((jq) => {
         const userName = urlParams.get("username");
         const team = urlParams.get("team");
         const isAdmin = getCookie("admin");
+
+        // 관리자 계정일 때만 버튼을 보여줍니다.
         if (isAdmin) {
+            jq("#create_team_btn").show();
+            jq("#remove_team_btn").show();
+            jq("#create_meetingroom_btn").show();
+            jq("#remove_meetingroom_btn").show();
+
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(`관리자계정`).css("font-size", "20px");
             jq("#welcome_container").removeClass("d-none");
             return;
         }
+
         if (userName && team) {
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(
