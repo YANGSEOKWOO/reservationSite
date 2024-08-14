@@ -61,7 +61,6 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const getReservationData = ({ date }) => {
-        console.log("date", date);
         const url = `${baseurl}/api/reservation/list?book_date=${date}`;
         return new Promise((resolve, reject) => {
             jq("#loader").show();
@@ -85,14 +84,9 @@ const reserveModule = ((jq) => {
      * @param {*} param0
      */
     const displayReservationData = ({ reservationData }) => {
-        console.log("reservationData:", reservationData);
-
         reservationData.forEach((data) => {
             const start = timeToNum(data.start_time); // 30분 단위 인덱스로 변환
             const end = timeToNum(data.end_time); // 30분 단위 인덱스로 변환
-            console.log("data:", data);
-            console.log("start:", start);
-            console.log("end", end);
             const roomRow = jq(`tr[data-room='${data.room}'] td`);
 
             for (let i = start; i < end; i++) {
@@ -179,7 +173,6 @@ const reserveModule = ((jq) => {
             start_time: `${start_time}`,
             end_time: `${end_time}`,
         });
-        console.log("updatedata:", data);
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: url,
@@ -202,7 +195,6 @@ const reserveModule = ((jq) => {
      * @returns {Promise} 로그인 성공여부, admin 여부
      */
     const login = ({ loginData }) => {
-        console.log("서버에게 보내는 데이터:", loginData);
         return new Promise((resolve, reject) => {
             jq.ajax({
                 type: "POST",
@@ -251,8 +243,6 @@ const reserveModule = ((jq) => {
         start_time,
         end_time,
     }) => {
-        console.log("createReservation called"); // 함수가 호출되었는지 확인
-
         const url = `${baseurl}/api/reservation/create`;
         const formattedStartTime = `${start_time}:00`;
         const formattedEndTime = `${end_time}:00`;
@@ -263,7 +253,6 @@ const reserveModule = ((jq) => {
             start_time: formattedStartTime,
             end_time: formattedEndTime,
         });
-        console.log("data:", data);
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: url,
@@ -337,7 +326,6 @@ const reserveModule = ((jq) => {
             .on("dp.change", function (e) {
                 if (!e.date || !e.oldDate || !e.date.isSame(e.oldDate, "day")) {
                     const dateText = e.date.format("YYYY-MM-DD");
-                    console.log("dateText:", dateText);
                     _searchDate = dateText;
                     reserveModule.load();
                 }
@@ -348,7 +336,7 @@ const reserveModule = ((jq) => {
 
         jq("#reservation_from")
             .datetimepicker({
-                format: "HH:mm", // 시간과 분만 표시
+                format: "LT", // 시간과 분만 표시
                 stepping: 30, // 1시간 간격
             })
             .on("dp.change", function handleFromDateChange(e) {
@@ -356,8 +344,7 @@ const reserveModule = ((jq) => {
             });
 
         jq("#reservation_to").datetimepicker({
-            format: "HH:mm", // 시간과 분만 표시
-            showClose: false,
+            format: "LT", // 시간과 분만 표시
             stepping: 30, // 1시간 간격
         });
 
@@ -378,8 +365,6 @@ const reserveModule = ((jq) => {
             const date = datePicker.date().format("YYYY-MM-DD");
             const start = fromPicker.date().format("HH:mm");
             const end = toPicker.date().format("HH:mm");
-            console.log("start:", start);
-            console.log("end:", end);
 
             if (!isTimeSlotAvailable(date, room, start, end)) {
                 alert("이미 예약된 시간이 있습니다.");
@@ -501,8 +486,6 @@ const reserveModule = ((jq) => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const currentTeam = urlParams.get("team");
-
-            console.log("currentTeam:", currentTeam);
 
             if (reservationTeam !== currentTeam) {
                 alert("삭제 권한이 없습니다.");
@@ -740,6 +723,11 @@ const reserveModule = ((jq) => {
                 // 선택한 셀 초기화
                 _selectedCells.forEach((cell) => cell.removeClass("select"));
                 _selectedCells = [];
+                jq(".reserve-items td").each(function () {
+                    if (jq(this).css("cursor") === "not-allowed") {
+                        jq(this).css("cursor", "pointer"); // pointer로 복원
+                    }
+                });
             }
         });
 
@@ -845,6 +833,7 @@ const reserveModule = ((jq) => {
     const deleteCookie = (name) => {
         document.cookie = name + "=; expires=Thu, 01 Jan 1999 00:00:10 GMT;";
     };
+
     return _pubFn;
 })(jq);
 
