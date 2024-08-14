@@ -97,19 +97,6 @@
         <input id="date_select" class="form-control" type="text" style="max-width:300px; text-align: center;" />
         <i class="bi bi-caret-right h1"></i>
     </div>
-    <div class="button-container mb-4 gap-2">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#remove_team_modal">팀
-            삭제하기</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create_team_modal">팀
-            추가하기</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-            data-bs-target="#remove_meetingroom_modal">회의실
-            삭제하기</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_meetingroom_modal">회의실
-            추가하기</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-            data-bs-target="#reservation_modal">예약하기</button>
-    </div>
 
     <div class="reservation-container">
         <table class="table">
@@ -163,6 +150,22 @@
             </div>
         </div>
 
+    </div>
+    <div class="button-container my-4 gap-2">
+        <button type="button" id="remove_team_btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal"
+            data-bs-target="#remove_team_modal">팀
+            삭제하기</button>
+        <button type="button" id="create_team_btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal"
+            data-bs-target="#create_team_modal">팀
+            추가하기</button>
+        <button type="button" id="remove_meetingroom_btn" class="btn btn-primary" style="display: none;"
+            data-bs-toggle="modal" data-bs-target="#remove_meetingroom_modal">회의실
+            삭제하기</button>
+        <button type="button" id="create_meetingroom_btn" class="btn btn-primary" style="display: none;"
+            data-bs-toggle="modal" data-bs-target="#create_meetingroom_modal">회의실
+            추가하기</button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+            data-bs-target="#reservation_modal">예약하기</button>
     </div>
 
     <!-- Reservation Modal -->
@@ -253,12 +256,12 @@
             </div>
         </div>
     </div>
-    <!-- #add_meetingroom_modal -->
-    <div class="modal fade" id="add_meetingroom_modal" tabindex="-1">
+    <!-- #create_meetingroom_modal -->
+    <div class="modal fade" id="create_meetingroom_modal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="add_meetingroom_modal_label">회의실추가</h1>
+                    <h1 class="modal-title fs-5" id="create_meetingroom_modal_label">회의실추가</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body input-group">
@@ -269,7 +272,7 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="add_meetingroom">추가하기</button>
+                    <button type="button" class="btn btn-primary" id="create_meetingroom">추가하기</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
