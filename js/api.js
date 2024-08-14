@@ -25,7 +25,7 @@ const reserveModule = ((jq) => {
 
     let _searchDate = todayFormatted;
 
-    const baseurl = "http://127.0.0.1:8010";
+    const baseurl = "http://127.0.0.1:8011";
     /**
      * TODO:: 팀 생성 API
      */
@@ -191,11 +191,12 @@ const reserveModule = ((jq) => {
             const start = jq(this).data("start");
             const end = jq(this).data("end");
             const team = jq(this).data("team");
+            const isAdmin = getCookie("admin");
 
             // 본인의 팀이 아니라면, 삭제와 수정이 불가능
             const urlParams = new URLSearchParams(window.location.search);
             const currentTeam = urlParams.get("team");
-            if (currentTeam !== team) {
+            if (currentTeam !== team && !isAdmin) {
                 jq("#del_reservation_btn").hide();
                 jq("#edit_reservation_btn").hide();
             } else {
@@ -609,7 +610,6 @@ const reserveModule = ((jq) => {
         jq("#logout_btn").on("click", function (e) {
             e.preventDefault();
             if (getCookie("admin")) {
-                console.log("삭제합니다");
                 deleteCookie("admin");
                 window.location.reload();
                 return;
@@ -696,29 +696,20 @@ const reserveModule = ((jq) => {
 
             // 팀 필드를 드롭다운으로 변경하고 기본값을 설정
             const currentTeam = jq(".team-name").val();
-            const teamOptions = `
-        <select class="form-control detail_reservation_item team-name">
-            <option value="cloudTech" ${
-                currentTeam === "cloudTech" ? "selected" : ""
-            }>cloudTech</option>
-            <option value="payRoll" ${
-                currentTeam === "payRoll" ? "selected" : ""
-            }>payRoll</option>
-            <option value="marketing" ${
-                currentTeam === "marketing" ? "selected" : ""
-            }>marketing</option>
-            <option value="hr" ${
-                currentTeam === "hr" ? "selected" : ""
-            }>hr</option>
-            <option value="devOps" ${
-                currentTeam === "devOps" ? "selected" : ""
-            }>devOps</option>
-            <option value="finance" ${
-                currentTeam === "finance" ? "selected" : ""
-            }>finance</option>
-        </select>`;
+            let teamOptions = `<select class="form-control detail_reservation_item team-name">`;
+            _teams.forEach((team) => {
+                teamOptions += `<option value="${team.name}" ${
+                    currentTeam === team.name ? "selected" : ""
+                }>${team.name}</option>`;
+            });
+            teamOptions += `</select>`;
             jq(".team-name").replaceWith(teamOptions);
 
+            // 포커스를 회의실 드롭다운으로 이동
+            jq(".room-name").focus();
+            jq(".detail_reservation_item").addClass("blinking");
+
+            // 수정 버튼을 저장 버튼으로 변경
             jq(this).text("저장하기").attr("id", "save_reservation_btn");
         });
 
@@ -760,6 +751,7 @@ const reserveModule = ((jq) => {
 
                 // 요청이 성공하면 다시 모든 input 필드를 readonly 상태로 전환
                 jq(".detail_reservation_item").prop("readonly", true);
+                jq(".detail_reservation_item").removeClass("blinking");
 
                 // 버튼 텍스트를 "수정하기"로 변경하고, id를 다시 edit_reservation_btn으로 변경
                 jq(this).text("수정하기").attr("id", "edit_reservation_btn");
@@ -1007,6 +999,7 @@ const reserveModule = ((jq) => {
                 await removeTeam({ teamKey: removeKey });
                 alert("팀 삭제 완료!");
                 jq("#remove_meetingroom_modal").modal("hide");
+                reserveModule.load();
             } catch (error) {
                 alert("팀을 삭제하는데 오류가 발생했습니다.:", error);
             }
