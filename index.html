@@ -76,7 +76,7 @@
                 </div>
                 <div class="dropdown" style="height: 100%;">
                     <button class="btn btn-primary dropdown-toggle" type="button" id="login_team_select_btn"
-                        data-bs-toggle="dropdown" style="height: 25px; font-size: 15px; padding: 0 5px;">팀 선택</button>
+                        data-bs-toggle="dropdown" style="height: 25px; font-size: 15px; padding: 0 5px; ">팀 선택</button>
                     <ul class="dropdown-menu" id="login_team_select">
 
                     </ul>
@@ -98,11 +98,16 @@
         <i class="bi bi-caret-right h1"></i>
     </div>
 
-    <div class="reservation-container">
+    <div class="reservation-container" style="display: none;">
+        <div id="loader" class="loader-overlay" style="display:none;" class="loader">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">회의실</th>
+                    <th scope="col" class="col">회의실</th>
                     <th data-time="05:00" class="timeline" scope="col">05</th>
                     <th data-time="05:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
                     <th data-time="06:00" class="timeline" scope="col">06</th>
@@ -144,12 +149,44 @@
 
             </tbody>
         </table>
-        <div id="loader" style="display:none;" class="loader">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
 
+
+    </div>
+    <div id="none_container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col" class="col">회의실</th>
+                    <th scope="col">08</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">09</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">10</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">11</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">12</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">13</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">14</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">15</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">16</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">17</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">18</th>
+                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                    <th scope="col">19</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+        <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
     </div>
     <div class="button-container my-4 gap-2">
         <button type="button" id="remove_team_btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal"

@@ -25,7 +25,7 @@ const reserveModule = ((jq) => {
 
     let _searchDate = todayFormatted;
 
-    const baseurl = "http://127.0.0.1:8009";
+    const baseurl = "http://127.0.0.1:8010";
     /**
      * TODO:: 팀 생성 API
      */
@@ -577,7 +577,7 @@ const reserveModule = ((jq) => {
                 "value"
             );
 
-            if (!userName || !password || !team) {
+            if (!userName || !password) {
                 alert("모든 필드를 채워주세요.");
                 return;
             }
@@ -587,7 +587,7 @@ const reserveModule = ((jq) => {
             const loginData = {
                 id: userName,
                 password: password,
-                team: team,
+                team: team ? team : "",
             };
             try {
                 const a = await login({ loginData: loginData });
@@ -1021,6 +1021,16 @@ const reserveModule = ((jq) => {
         try {
             _meetingRooms = await getMeetingRooms();
             console.log("meetingRooms:", _meetingRooms);
+            console.log("mettingromms.length:", typeof _meetingRooms.length);
+            if (_meetingRooms.length === 0) {
+                console.log("1");
+                jq(".reservation-container").hide();
+                jq("#none_container").show();
+            } else {
+                console.log("2");
+                jq(".reservation-container").show();
+                jq("#none_container").css("display", "none");
+            }
             const roomRows = {};
             jq("#room_select").empty();
             _meetingRooms.forEach((room) => {
