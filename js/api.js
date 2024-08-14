@@ -1,19 +1,20 @@
 const jq = $.noConflict();
 
 // 팀 색상 매핑
-const teamColors = {
-    cloudTech: "#007bff",
-    payRoll: "#28a745",
-    marketing: "#dc3545",
-    devOps: "#ffc107",
-    hr: "#17a2b8",
-    finance: "#6610f2",
-};
+// const teamColors = {
+//     cloudTech: "#007bff",
+//     payRoll: "#28a745",
+//     marketing: "#dc3545",
+//     devOps: "#ffc107",
+//     hr: "#17a2b8",
+//     finance: "#6610f2",
+// };
 
 const reserveModule = ((jq) => {
     let _pubFn = {};
     let _reservationData;
     let _meetingRooms;
+    let _teams;
     let _selectedCells = [];
     let isMouseDown = false;
     let startCellIndex = null;
@@ -24,8 +25,43 @@ const reserveModule = ((jq) => {
 
     let _searchDate = todayFormatted;
 
-    const baseurl = "http://127.0.0.1:8007";
-
+    const baseurl = "http://127.0.0.1:8009";
+    /**
+     * TODO:: 팀 생성 API
+     */
+    const createTeam = async ({ teamData }) => {
+        console.log("teamData:", teamData);
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                type: "POST",
+                url: `${baseurl}/api/team/create`,
+                dataType: "json",
+                data: JSON.stringify(teamData),
+                contentType: "application/json",
+            })
+                .done((response) => {
+                    resolve(response);
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
+    const removeTeam = ({ teamKey }) => {
+        const url = `${baseurl}/api/team/delete/${teamKey}`;
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                type: "DELETE",
+                url: url,
+            })
+                .done((response) => {
+                    resolve(response);
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
     /**
      *
      * Time 데이터를 Number로 바꾸는 함수
@@ -54,7 +90,39 @@ const reserveModule = ((jq) => {
                 });
         });
     };
-
+    /**
+     * 팀을 가져오는 함수
+     */
+    const getTeamList = () => {
+        const url = `${baseurl}/api/team/list`;
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                type: "GET",
+                url: url,
+            })
+                .done((response) => {
+                    resolve(response);
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
+    const removeRoom = ({ roomKey }) => {
+        const url = `${baseurl}/api/reservation/delete/room/${roomKey}`;
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                type: "DELETE",
+                url: url,
+            })
+                .done((response) => {
+                    resolve(response);
+                })
+                .fail((error) => {
+                    reject(error);
+                });
+        });
+    };
     /**
      * 예약정보를 가져오는 함수
      * @param {*} param0
@@ -84,6 +152,7 @@ const reserveModule = ((jq) => {
      * @param {*} param0
      */
     const displayReservationData = ({ reservationData }) => {
+        console.log("displayReservationData:", reservationData);
         reservationData.forEach((data) => {
             const start = timeToNum(data.start_time); // 30분 단위 인덱스로 변환
             const end = timeToNum(data.end_time); // 30분 단위 인덱스로 변환
@@ -92,7 +161,7 @@ const reserveModule = ((jq) => {
             for (let i = start; i < end; i++) {
                 const cell = roomRow.eq(i - 9);
                 cell.addClass("reserved")
-                    .css("background-color", teamColors[data.team])
+                    .css("background-color", data.team_color)
                     .data({
                         id: data.id,
                         room: data.room,
@@ -204,6 +273,7 @@ const reserveModule = ((jq) => {
                 contentType: "application/json",
             })
                 .done((response) => {
+                    console.log("로그인 response:", response);
                     resolve(response);
                 })
                 .fail((error) => {
@@ -271,6 +341,34 @@ const reserveModule = ((jq) => {
         });
     };
     /**
+     * 회의실 생성하는 함수
+     * @param {*} param0
+     * @returns
+     */
+    const createRoom = ({ roomName }) => {
+        const data = {
+            name: roomName,
+        };
+        return new Promise((resolve, reject) => {
+            jq.ajax({
+                url: `${baseurl}/api/reservation/meetingroom/create`,
+                type: "POST",
+                dataType: "json",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+            })
+                .done((response) => {
+                    resolve(response);
+                })
+                .fail((error) => {
+                    if (error.status === 400) {
+                        alert(`에러: ${error.responseJSON.detail}`);
+                    }
+                    reject(error);
+                });
+        });
+    };
+    /**
      * 예약할 때, 자리가 비었는지 리턴하는 함수
      * @param {*} date - 예약하고자 하는 날짜
      * @param {*} room - 예약하고자 하는 회의실 이름
@@ -308,13 +406,56 @@ const reserveModule = ((jq) => {
         }
         return true;
     };
+    const setTeams = () => {
+        jq("#team_select").empty();
+        jq("#login_team_select").empty();
+        jq("#remove_team_select").empty();
+
+        // _teams 배열을 순회하며 각 team의 이름을 드롭다운 목록에 추가합니다.
+        _teams.forEach((team) => {
+            // 두 개의 별도 listItem을 각각 생성
+            const loginListItem = jq("<li></li>").append(
+                jq("<a></a>")
+                    .addClass("dropdown-item")
+                    .attr("href", "#")
+                    .text(team.name)
+                    .data("value", team.name)
+                    .data("key", team.key)
+            );
+
+            const teamListItem = jq("<li></li>").append(
+                jq("<a></a>")
+                    .addClass("dropdown-item")
+                    .attr("href", "#")
+                    .text(team.name)
+                    .data("value", team.name)
+                    .data("key", team.key)
+            );
+            const removeTeamListItem = jq("<li></li>").append(
+                jq("<a></a>")
+                    .addClass("dropdown-item")
+                    .attr("href", "#")
+                    .text(team.name)
+                    .data("value", team.name)
+                    .data("key", team.key)
+            );
+
+            // 각각의 드롭다운에 추가
+            jq("#login_team_select").append(loginListItem);
+            jq("#team_select").append(teamListItem);
+            jq("#remove_team_select").append(removeTeamListItem);
+        });
+    };
 
     _pubFn.load = async () => {
         await reserveModule.loadMeetingRooms();
+        _teams = await getTeamList();
+        setTeams();
+        console.log("teams:", _teams);
         _reservationData = await getReservationData({ date: _searchDate });
+
         displayReservationData({ reservationData: _reservationData });
     };
-
     _pubFn.initEventListeners = () => {
         jq("#date_select")
             .datetimepicker({
@@ -418,13 +559,15 @@ const reserveModule = ((jq) => {
             jq(this).addClass("active");
             jq("#team_select_btn").text(teamText);
         });
-        jq("#login_team_select .dropdown-item").on("click", function (e) {
+        jq("#login_team_select").on("click", ".dropdown-item", function (e) {
             e.preventDefault();
             const teamText = jq(this).text();
+            console.log("teamText:", teamText);
             jq("#login_team_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
             jq("#login_team_select_btn").text(teamText);
         });
+
         // 로그인 버튼 클릭 이벤트
         jq("#login_btn").on("click", async function (e) {
             e.preventDefault();
@@ -448,7 +591,7 @@ const reserveModule = ((jq) => {
             };
             try {
                 const a = await login({ loginData: loginData });
-                if (a.isAdmin) {
+                if (a.isAdmin === "true") {
                     setCookie("admin", "true", 1);
                     _pubFn.checkLoginStatus();
                 } else {
@@ -466,6 +609,7 @@ const reserveModule = ((jq) => {
         jq("#logout_btn").on("click", function (e) {
             e.preventDefault();
             if (getCookie("admin")) {
+                console.log("삭제합니다");
                 deleteCookie("admin");
                 window.location.reload();
                 return;
@@ -762,6 +906,110 @@ const reserveModule = ((jq) => {
                 minute === 0 ? "00" : minute
             }`;
         }
+        // 회의실 드롭다운 메뉴 추가 (삭제)
+        jq("#remove_meetingroom_modal").on("click", function () {
+            // 기존의 목록을 비웁니다.
+            jq("#delete_room_select").empty();
+
+            // _meetingRooms 배열을 순회하며 각 room의 이름을 드롭다운 목록에 추가합니다.
+            _meetingRooms.forEach((room) => {
+                const listItem = jq("<li></li>").append(
+                    jq("<a></a>")
+                        .addClass("dropdown-item")
+                        .attr("href", "#")
+                        .text(room.name)
+                        .data("value", room.name)
+                        .data("key", room.id)
+                );
+                jq("#delete_room_select").append(listItem);
+            });
+        });
+        // 회의실 드롭다운 메뉴 선택 시, 텍스트변경
+        jq("#delete_room_select").on("click", ".dropdown-item", function () {
+            // 클릭된 항목의 텍스트를 가져옴
+            const selectedText = jq(this).text();
+            const seletedKey = jq(this).data("key");
+            // 버튼의 텍스트를 선택된 항목의 텍스트로 변경
+            jq("#delete_select_room_btn").text(selectedText);
+            jq("#delete_select_room_btn").data("key", seletedKey);
+        });
+        // 회의실 삭제 버튼
+        jq("#remove_meetingroom").on("click", async function () {
+            const removeKey = jq("#delete_select_room_btn").data("key");
+            try {
+                await removeRoom({ roomKey: removeKey });
+                alert("회의실 삭제 완료");
+                jq("#remove_meetingroom_modal").modal("hide");
+            } catch (error) {
+                alert(
+                    "회의실을 삭제하는데 에러가 발생했습니다. 다시 시도해주세요"
+                );
+                console.error(error);
+            }
+        });
+        // 회의실 추가 버튼
+        jq("#add_meetingroom").on("click", async function () {
+            const roomName = jq("#meetingroom_name").val();
+            try {
+                await createRoom({ roomName: roomName });
+                alert("회의실 생성이 완료되었습니다.");
+                jq("#add_meetingroom_modal").modal("hide");
+                reserveModule.load();
+            } catch (error) {
+                alert("회의실 생성하는데 오류가 발생했습니다.");
+                console.log("error:", error);
+                return;
+            }
+        });
+        // 팀생성
+        jq("#create_team").on("click", async function () {
+            const teamName = jq("#team_name").val();
+            const teamColor = jq("#team_color").val(); // 선택된 색상값 가져오기
+
+            if (!teamName) {
+                alert("팀 이름을 입력해 주세요.");
+                return;
+            }
+
+            // 팀 정보를 서버로 전송하거나 로컬에서 처리하는 로직 추가
+            try {
+                // 예시로, 콘솔에 팀 이름과 색상 출력
+                console.log("팀 이름:", teamName);
+                console.log("팀 색상:", teamColor);
+                const teamData = {
+                    name: teamName,
+                    color: teamColor,
+                };
+                await createTeam({ teamData: teamData });
+
+                alert("팀이 추가되었습니다.");
+                reserveModule.load();
+                jq("#create_team_modal").modal("hide");
+            } catch (error) {
+                console.error("팀을 추가하는데 오류가 발생했습니다:", error);
+                alert("팀을 추가하는데 오류가 발생했습니다.");
+            }
+        });
+        jq("#remove_team_select").on("click", ".dropdown-item", function () {
+            // 클릭된 항목의 텍스트를 가져옴
+            const selectedText = jq(this).text();
+            const seletedKey = jq(this).data("key");
+            console.log("selectedText:", selectedText);
+            console.log("selectedKey:", seletedKey);
+            // 버튼의 텍스트를 선택된 항목의 텍스트로 변경
+            jq("#delete_select_team_btn").text(selectedText);
+            jq("#delete_select_team_btn").data("key", seletedKey);
+        });
+        jq("#remove_team").on("click", async function () {
+            const removeKey = jq("#delete_select_team_btn").data("key");
+            try {
+                await removeTeam({ teamKey: removeKey });
+                alert("팀 삭제 완료!");
+                jq("#remove_meetingroom_modal").modal("hide");
+            } catch (error) {
+                alert("팀을 삭제하는데 오류가 발생했습니다.:", error);
+            }
+        });
     };
     /**
      * 회의실을 가져오고, 그 회의실에 맞게 table의 row를 추가한다
@@ -771,6 +1019,7 @@ const reserveModule = ((jq) => {
         jq("#loader").show();
         try {
             _meetingRooms = await getMeetingRooms();
+            console.log("meetingRooms:", _meetingRooms);
             const roomRows = {};
             jq("#room_select").empty();
             _meetingRooms.forEach((room) => {
@@ -804,12 +1053,12 @@ const reserveModule = ((jq) => {
         const urlParams = new URLSearchParams(window.location.search);
         const userName = urlParams.get("username");
         const team = urlParams.get("team");
-
         const isAdmin = getCookie("admin");
         if (isAdmin) {
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(`관리자계정`).css("font-size", "20px");
             jq("#welcome_container").removeClass("d-none");
+            return;
         }
         if (userName && team) {
             jq(".login-container").addClass("d-none");
