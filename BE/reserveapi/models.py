@@ -39,6 +39,7 @@ class Team(Base):
 
     key = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
+    color = Column(String, nullable=False)  # 팀 색상 컬럼 추가
 
     members = relationship("User", back_populates="team")
     reservations = relationship("Reservation", back_populates="team")
