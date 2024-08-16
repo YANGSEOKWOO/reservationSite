@@ -176,3 +176,12 @@ p {
 
     margin-right: 0;
 }
+
+.wrapper .row {
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.col {
+    min-width: 0px;
+}
