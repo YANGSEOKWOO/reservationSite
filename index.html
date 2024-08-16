@@ -86,7 +86,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="search-container middle-css">
+                <div class="search-container d-flex align-items-center">
                     <i class="fa-solid fa-magnifying-glass fa-xl" style="color: #cccccc;"></i>
                     <div class="dropdown">
                         <button class="btn dropdown-toggle" type="button" id="filter_select_team_btn"
@@ -172,27 +172,38 @@
             <img src="./src/book.png" alt="회의실예약" style="width: 25px; height: 25px;">
         </nav>
         <div class="content-container col pt-4">
-            <div class="header-container d-flex container-fluid gap-3">
-                <h3>회의실 예약</h3>
-                <img src="./src/book.png" alt="예약아이콘" style="width: 30px; height: 30px;">
+            <div class="header-container d-flex justify-content-between mx-3">
+                <div class="header-left-container d-flex container-fluid gap-3">
+                    <h3>회의실 예약</h3>
+                    <img src="./src/book.png" alt="예약아이콘" style="width: 30px; height: 30px;">
+                </div>
             </div>
             <div class="d-flex justify-content-between m-4">
-                <div></div>
+                <div class="button-container gap-2">
+                    <button type="button" class="btn btn-primary gap-2 middle-css rounded" data-bs-toggle="modal"
+                        data-bs-target="#reservation_modal" style="min-width: 110px; height: 35px;"><i
+                            class="fa-solid fa-circle-plus" style="color: #ffffff; "></i>
+                        <p>예약하기</p>
+                    </button>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#see_team_color" style="min-width: 102px; max-height: 38px;">
+                        팀 색깔 보기
+                    </button>
+                </div>
                 <div class="time-container d-flex">
                     <i class=" bi bi-caret-left h1"></i>
                     <input id="date_select" class="form-control" type="text"
                         style="max-width:300px; text-align: center;" />
                     <i class="bi bi-caret-right h1"></i>
                 </div>
-                <div class="button-container gap-2">
-                    <button type="button" class="btn btn-primary gap-2 middle-css rounded" data-bs-toggle="modal"
-                        data-bs-target="#reservation_modal" style="width: 110px; height: 35px;"><i
-                            class="fa-solid fa-circle-plus" style="color: #ffffff;"></i>
-                        <p>예약하기</p>
-                    </button>
+                <div></div>
+            </div>
+            <div class="collapse m-4" id="see_team_color">
+                <div class="row border rounded" id="color-items">
+
                 </div>
             </div>
-            <div class="reservation-container mx-5" style="display: none;">
+            <div class="reservation-container mx-3" style="display: none;">
                 <div id="loader" class="loader-overlay" style="display:none;" class="loader">
                     <div class="spinner-border" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -278,9 +289,6 @@
                     </tbody>
                 </table>
                 <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
-            </div>
-            <div class="bottom-container">
-
             </div>
         </div>
     </div>

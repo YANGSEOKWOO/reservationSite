@@ -414,9 +414,11 @@ const reserveModule = ((jq) => {
         jq("#login_team_select").empty();
         jq("#remove_team_select").empty();
         jq("#filter_team_select").empty();
+        jq("#color-items").empty();
 
         // _teams 배열을 순회하며 각 team의 이름을 드롭다운 목록에 추가합니다.
         _teams.forEach((team) => {
+            console.log("team;", team);
             // 두 개의 별도 listItem을 각각 생성
             const loginListItem = jq("<li></li>").append(
                 jq("<a></a>")
@@ -457,6 +459,13 @@ const reserveModule = ((jq) => {
             jq("#team_select").append(teamListItem);
             jq("#remove_team_select").append(removeTeamListItem);
             jq("#filter_team_select").append(filterTeamListItem);
+
+            const colorItem = `
+            <div class="col-3 d-flex align-items-center m-1">
+                    <div style="background-color: ${team.color}; width: 20px; height: 20px; margin-right: 10px; border-radius: 50%;"></div>
+                    <p class="h6 m-0">${team.name}</p>
+            </div>`;
+            jq("#color-items").append(colorItem);
         });
         jq("#filter_team_select").append(
             `<li><a href="#" class="dropdown-item">전체보기</a></li>`
@@ -995,7 +1004,7 @@ const reserveModule = ((jq) => {
                 jq("#create_team_modal").modal("hide");
             } catch (error) {
                 console.error("팀을 추가하는데 오류가 발생했습니다:", error);
-                alert("팀을 추가하는데 오류가 발생했습니다.");
+                alert(error.responseJSON.detail);
             }
         });
         jq("#remove_team_select").on("click", ".dropdown-item", function () {
@@ -1013,7 +1022,7 @@ const reserveModule = ((jq) => {
             try {
                 await removeTeam({ teamKey: removeKey });
                 alert("팀 삭제 완료!");
-                jq("#remove_meetingroom_modal").modal("hide");
+                jq("#remove_team_modal").modal("hide");
                 reserveModule.load();
             } catch (error) {
                 alert("팀을 삭제하는데 오류가 발생했습니다.:", error);
