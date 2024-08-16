@@ -577,7 +577,7 @@ const reserveModule = ((jq) => {
             const team = jq("#login_team_select .dropdown-item.active").data(
                 "value"
             );
-
+            // TODO:: 로직수정
             if (!userName || !password) {
                 alert("모든 필드를 채워주세요.");
                 return;
@@ -630,8 +630,9 @@ const reserveModule = ((jq) => {
 
             const urlParams = new URLSearchParams(window.location.search);
             const currentTeam = urlParams.get("team");
+            const isAdmin = getCookie("admin");
 
-            if (reservationTeam !== currentTeam) {
+            if (reservationTeam !== currentTeam && !isAdmin) {
                 alert("삭제 권한이 없습니다.");
                 return;
             }
@@ -1071,7 +1072,6 @@ const reserveModule = ((jq) => {
             jq("#welcome_container").removeClass("d-none");
             return;
         }
-
         if (userName && team) {
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(

@@ -43,6 +43,10 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"
         integrity="sha256-7NQm0bhvDJKosL8d+6ZgSi2LxZCIcA/TD087GLEBO9M=" crossorigin="anonymous"></script>
 
+    <!-- font-awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Custom Styles -->
     <link rel="stylesheet" href="./style.css">
@@ -57,152 +61,186 @@
 </head>
 
 <body>
-    <!-- 로그인 폼 추가 -->
-    <div class="header-container d-flex justify-content-between">
-        <h3>회의실 예약</h3>
-        <div class="login-container d-flex justify-content-end" style="max-height: 25px; height: 25px;">
-            <form id="login_form" class="d-flex align-items-center gap-3" style="height: 100%;">
-                <div class="middle-css gap-2" style="height: 100%;">
-                    <label for="username" class="form-label m-0"
-                        style="min-width: 40px; font-size: 15px; line-height: 25px;">아이디</label>
-                    <input type="text" class="form-control" id="username" required
-                        style="max-width: 80px; height: 25px; padding: 0; font-size: 15px; line-height: 25px;">
-                </div>
-                <div class="middle-css" style="height: 100%;">
-                    <label for="password" class="form-label m-0"
-                        style="min-width: 60px; font-size: 15px; line-height: 25px;">비밀번호</label>
-                    <input type="password" class="form-control" id="password" required
-                        style="max-width: 80px; height: 25px; padding: 0; font-size: 15px; line-height: 25px;">
-                </div>
-                <div class="dropdown" style="height: 100%;">
-                    <button class="btn btn-primary dropdown-toggle" type="button" id="login_team_select_btn"
-                        data-bs-toggle="dropdown" style="height: 25px; font-size: 15px; padding: 0 5px; ">팀 선택</button>
-                    <ul class="dropdown-menu" id="login_team_select">
+    <nav class="navbar navbar-expand-lg border-bottom mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Navbar</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Pricing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+                    </li>
+                </ul>
+                <div class="login-container d-flex justify-content-end" style="max-height: 25px; height: 25px;">
+                    <form id="login_form" class="d-flex align-items-center gap-2" style="height: 100%;">
+                        <div class="middle-css gap-2" style="height: 100%;">
+                            <label for="username" class="form-label m-0"
+                                style="min-width: 40px; font-size: 15px; line-height: 25px;">아이디</label>
+                            <input type="text" class="form-control" id="username" required
+                                style="max-width: 80px; height: 25px; padding: 0; font-size: 15px; line-height: 25px;">
+                        </div>
+                        <div class="middle-css" style="height: 100%;">
+                            <label for="password" class="form-label m-0"
+                                style="min-width: 60px; font-size: 15px; line-height: 25px;">비밀번호</label>
+                            <input type="password" class="form-control" id="password" required
+                                style="max-width: 80px; height: 25px; padding: 0; font-size: 15px; line-height: 25px;">
+                        </div>
+                        <div class="dropdown" style="height: 100%;">
+                            <button class="btn dropdown-toggle border border-2" type="button" id="login_team_select_btn"
+                                data-bs-toggle="dropdown" style="height: 25px; font-size: 15px; padding: 0 5px; ">팀
+                                선택</button>
+                            <ul class="dropdown-menu" id="login_team_select">
 
-                    </ul>
+                            </ul>
+                        </div>
+                        <div class="login-container border middle-css rounded" id="login_btn"
+                            style="height: 25px; width: 25px; font-size: 15px; padding: 0 5px;">
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                        </div>
+                    </form>
                 </div>
-                <button type="button" class="btn btn-primary" id="login_btn"
-                    style="height: 25px; font-size: 15px; padding: 0 5px;">로그인</button>
-            </form>
-        </div>
 
-        <div class="welcome-container d-none " id="welcome_container">
-            <p id="welcome_message">
-                <p />
-                <button type="button" class="btn btn-primary" id="logout_btn">로그아웃</button>
-        </div>
-    </div>
-    <div class="time-container middle-css m-4">
-        <i class=" bi bi-caret-left h1"></i>
-        <input id="date_select" class="form-control" type="text" style="max-width:300px; text-align: center;" />
-        <i class="bi bi-caret-right h1"></i>
-    </div>
-
-    <div class="reservation-container" style="display: none;">
-        <div id="loader" class="loader-overlay" style="display:none;" class="loader">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <div class="welcome-container d-none gap-2" id="welcome_container">
+                    <div id="welcome_message" style="font-size: 18px;">
+                    </div>
+                    <div class="logout-container middle-css border rounded"
+                        style="height: 30px; width: 30px; cursor: pointer;">
+                        <i class="fa-solid fa-right-from-bracket" id="logout_btn"></i>
+                    </div>
+                </div>
             </div>
         </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col" class="col">회의실</th>
-                    <th data-time="05:00" class="timeline" scope="col">05</th>
-                    <th data-time="05:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="06:00" class="timeline" scope="col">06</th>
-                    <th data-time="06:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="07:00" class="timeline" scope="col">07</th>
-                    <th data-time="07:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="08:00" class="timeline" scope="col">08</th>
-                    <th data-time="08:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="09:00" class="timeline" scope="col">09</th>
-                    <th data-time="09:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="10:00" class="timeline" scope="col">10</th>
-                    <th data-time="10:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="11:00" class="timeline" scope="col">11</th>
-                    <th data-time="11:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="12:00" class="timeline" scope="col">12</th>
-                    <th data-time="12:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="13:00" class="timeline" scope="col">13</th>
-                    <th data-time="13:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="14:00" class="timeline" scope="col">14</th>
-                    <th data-time="14:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="15:00" class="timeline" scope="col">15</th>
-                    <th data-time="15:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="16:00" class="timeline" scope="col">16</th>
-                    <th data-time="16:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="17:00" class="timeline" scope="col">17</th>
-                    <th data-time="17:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="18:00" class="timeline" scope="col">18</th>
-                    <th data-time="18:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="19:00" class="timeline" scope="col">19</th>
-                    <th data-time="19:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="20:00" class="timeline" scope="col">20</th>
-                    <th data-time="20:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="21:00" class="timeline" scope="col">21</th>
-                    <th data-time="21:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th data-time="22:00" class="timeline" scope="col">22</th>
-                </tr>
-            </thead>
-            <tbody class="reserve-items">
+    </nav>
+    <!-- 로그인 폼 추가 -->
+    <div class="container-fluid">
+        <div class="header-container d-flex justify-content-between container-fluid">
+            <h3>회의실 예약</h3>
 
-            </tbody>
-        </table>
+        </div>
+        <div class="time-container middle-css m-4">
+            <i class=" bi bi-caret-left h1"></i>
+            <input id="date_select" class="form-control" type="text" style="max-width:300px; text-align: center;" />
+            <i class="bi bi-caret-right h1"></i>
+        </div>
+
+        <div class="reservation-container" style="display: none;">
+            <div id="loader" class="loader-overlay" style="display:none;" class="loader">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="col">회의실</th>
+                        <th data-time="05:00" class="timeline" scope="col">05</th>
+                        <th data-time="05:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="06:00" class="timeline" scope="col">06</th>
+                        <th data-time="06:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="07:00" class="timeline" scope="col">07</th>
+                        <th data-time="07:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="08:00" class="timeline" scope="col">08</th>
+                        <th data-time="08:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="09:00" class="timeline" scope="col">09</th>
+                        <th data-time="09:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="10:00" class="timeline" scope="col">10</th>
+                        <th data-time="10:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="11:00" class="timeline" scope="col">11</th>
+                        <th data-time="11:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="12:00" class="timeline" scope="col">12</th>
+                        <th data-time="12:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="13:00" class="timeline" scope="col">13</th>
+                        <th data-time="13:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="14:00" class="timeline" scope="col">14</th>
+                        <th data-time="14:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="15:00" class="timeline" scope="col">15</th>
+                        <th data-time="15:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="16:00" class="timeline" scope="col">16</th>
+                        <th data-time="16:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="17:00" class="timeline" scope="col">17</th>
+                        <th data-time="17:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="18:00" class="timeline" scope="col">18</th>
+                        <th data-time="18:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="19:00" class="timeline" scope="col">19</th>
+                        <th data-time="19:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="20:00" class="timeline" scope="col">20</th>
+                        <th data-time="20:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="21:00" class="timeline" scope="col">21</th>
+                        <th data-time="21:30" class="timeline" scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th data-time="22:00" class="timeline" scope="col">22</th>
+                    </tr>
+                </thead>
+                <tbody class="reserve-items">
+
+                </tbody>
+            </table>
 
 
-    </div>
-    <div id="none_container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col" class="col">회의실</th>
-                    <th scope="col">08</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">09</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">10</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">11</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">12</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">13</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">14</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">15</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">16</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">17</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">18</th>
-                    <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
-                    <th scope="col">19</th>
-                </tr>
-            </thead>
-            <tbody>
+        </div>
+        <div id="none_container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="col">회의실</th>
+                        <th scope="col">08</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">09</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">10</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">11</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">12</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">13</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">14</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">15</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">16</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">17</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">18</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">19</th>
+                    </tr>
+                </thead>
+                <tbody>
 
-            </tbody>
-        </table>
-        <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
-    </div>
-    <div class="button-container my-4 gap-2">
-        <button type="button" id="remove_team_btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal"
-            data-bs-target="#remove_team_modal">팀
-            삭제하기</button>
-        <button type="button" id="create_team_btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal"
-            data-bs-target="#create_team_modal">팀
-            추가하기</button>
-        <button type="button" id="remove_meetingroom_btn" class="btn btn-primary" style="display: none;"
-            data-bs-toggle="modal" data-bs-target="#remove_meetingroom_modal">회의실
-            삭제하기</button>
-        <button type="button" id="create_meetingroom_btn" class="btn btn-primary" style="display: none;"
-            data-bs-toggle="modal" data-bs-target="#create_meetingroom_modal">회의실
-            추가하기</button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-            data-bs-target="#reservation_modal">예약하기</button>
+                </tbody>
+            </table>
+            <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
+        </div>
+        <div class="button-container my-4 gap-2">
+            <button type="button" id="remove_team_btn" class="btn btn-primary" style="display: none;"
+                data-bs-toggle="modal" data-bs-target="#remove_team_modal">팀
+                삭제하기</button>
+            <button type="button" id="create_team_btn" class="btn btn-primary" style="display: none;"
+                data-bs-toggle="modal" data-bs-target="#create_team_modal">팀
+                추가하기</button>
+            <button type="button" id="remove_meetingroom_btn" class="btn btn-primary" style="display: none;"
+                data-bs-toggle="modal" data-bs-target="#remove_meetingroom_modal">회의실
+                삭제하기</button>
+            <button type="button" id="create_meetingroom_btn" class="btn btn-primary" style="display: none;"
+                data-bs-toggle="modal" data-bs-target="#create_meetingroom_modal">회의실
+                추가하기</button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#reservation_modal">예약하기</button>
+        </div>
     </div>
 
     <!-- Reservation Modal -->
