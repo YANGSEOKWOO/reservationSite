@@ -262,7 +262,6 @@
                 </table>
                 <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
             </div>
-
         </div>
     </div>
     </div>
@@ -365,14 +364,14 @@
                 </div>
                 <div class="modal-body input-group">
                     <div class="modal-body">
-                        <label for="meetingroom_name" style="text-wrap: nowrap;">From</label>
+                        <h5>추가할 회의실의 이름을 입력해 주세요.</h5>
                         <input id="meetingroom_name" class="form-control" type="text" />
                     </div>
 
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="create_meetingroom">추가하기</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
                 </div>
             </div>
         </div>
@@ -390,11 +389,12 @@
                     <div class="modal-body">
 
                         <div class="dropdown">
-                            <p>회의실을 선택해 주세요</p>
+                            <h5 class="fw-bold">회의실을 선택해 주세요</h5>
                             <button class="btn btn-primary dropdown-toggle" type="button" id="delete_select_room_btn"
                                 data-bs-toggle="dropdown">회의실 선택</button>
                             <ul class="dropdown-menu" id="delete_room_select">
                             </ul>
+                            <p class="text-muted">※ 삭제하면, 회의실의 모든 예약이 같이 사라지게 됩니다.</p>
                         </div>
                     </div>
 
@@ -417,12 +417,14 @@
                 </div>
                 <div class="modal-body input-group">
                     <div class="modal-body">
-                        <label for="team_name" style="text-wrap: nowrap;">팀 이름</label>
+                        <h5 class="fw-bold">팀 이름을 작성해 주세요</h5>
                         <input id="team_name" class="form-control" type="text" />
 
-                        <label for="team_color" style="text-wrap: nowrap;">팀 색상</label>
-                        <input id="team_color" class="form-control" type="color" value="#007bff"
-                            style="min-width: 220px;" />
+                        <h5 class="fw-bold mt-3">팀 색상을 지정해 주세요</h5>
+                        <p>
+                            <input id="team_color" class="form-control" type="color" value="#007bff"
+                                style="width: 50px;" />
+                        </p>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -444,11 +446,12 @@
                 <div class="modal-body input-group">
                     <div class="modal-body">
                         <div class="dropdown">
-                            <div>삭제할 팀을 선택해 주세요</div>
+                            <h5>삭제할 팀을 선택해 주세요</h5>
                             <button class="btn btn-primary dropdown-toggle" type="button" id="delete_select_team_btn"
                                 data-bs-toggle="dropdown">팀 선택</button>
                             <ul class="dropdown-menu" id="remove_team_select">
                             </ul>
+                            <p class="text-muted">※삭제하면, 복구할 수 없습니다.</p>
                         </div>
                     </div>
 
