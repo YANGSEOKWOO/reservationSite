@@ -54,6 +54,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <title>회의실 예약 시스템</title>
+    <link rel="shortcut icon" href="./src/book.png" type="image/x-icon">
     <style></style>
     <style>
 
@@ -119,13 +120,44 @@
                         style="height: 30px; width: 30px; cursor: pointer;">
                         <i class="fa-solid fa-right-from-bracket" id="logout_btn"></i>
                     </div>
+                    <!-- 드롭다운 -->
+                    <div class="dropdown">
+                        <button class="btn border dropdown-toggle middle-css" type="button" id="setting"
+                            data-bs-toggle="dropdown" style="height: 30px;">시스템 설정</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <button type="button" id="remove_team_btn" class="btn btn-primary dropdown-item"
+                                style="display: none;" data-bs-toggle="modal" data-bs-target="#remove_team_modal">팀
+                                삭제하기</button>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <button type="button" id="create_team_btn" class="btn btn-primary dropdown-item"
+                                style="display: none;" data-bs-toggle="modal" data-bs-target="#create_team_modal">팀
+                                추가하기</button>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <button type="button" id="remove_meetingroom_btn" class="btn btn-primary dropdown-item"
+                                style="display: none;" data-bs-toggle="modal"
+                                data-bs-target="#remove_meetingroom_modal">회의실
+                                삭제하기</button>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <button type="button" id="create_meetingroom_btn" class="btn btn-primary dropdown-item"
+                                style="display: none;" data-bs-toggle="modal"
+                                data-bs-target="#create_meetingroom_modal">회의실
+                                추가하기</button>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
     <!-- 로그인 폼 추가 -->
     <div class="container-fluid">
-        <div class="header-container d-flex justify-content-between container-fluid">
+        <div class="header-container d-flex container-fluid gap-3">
+            <img src="./src/book.png" alt="예약아이콘" style="width: 30px; height: 30px;">
             <h3>회의실 예약</h3>
 
         </div>
@@ -226,18 +258,7 @@
             <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
         </div>
         <div class="button-container my-4 gap-2">
-            <button type="button" id="remove_team_btn" class="btn btn-primary" style="display: none;"
-                data-bs-toggle="modal" data-bs-target="#remove_team_modal">팀
-                삭제하기</button>
-            <button type="button" id="create_team_btn" class="btn btn-primary" style="display: none;"
-                data-bs-toggle="modal" data-bs-target="#create_team_modal">팀
-                추가하기</button>
-            <button type="button" id="remove_meetingroom_btn" class="btn btn-primary" style="display: none;"
-                data-bs-toggle="modal" data-bs-target="#remove_meetingroom_modal">회의실
-                삭제하기</button>
-            <button type="button" id="create_meetingroom_btn" class="btn btn-primary" style="display: none;"
-                data-bs-toggle="modal" data-bs-target="#create_meetingroom_modal">회의실
-                추가하기</button>
+
             <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                 data-bs-target="#reservation_modal">예약하기</button>
         </div>

@@ -1066,6 +1066,7 @@ const reserveModule = ((jq) => {
             jq("#remove_team_btn").show();
             jq("#create_meetingroom_btn").show();
             jq("#remove_meetingroom_btn").show();
+            jq("#setting").show();
 
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(`관리자계정`).css("font-size", "20px");
@@ -1078,6 +1079,7 @@ const reserveModule = ((jq) => {
                 `${userName}님 안녕하세요! (Team: ${team})`
             );
             jq("#welcome_container").removeClass("d-none");
+            jq("#setting").hide();
         }
     };
 
