@@ -189,3 +189,7 @@ p {
 .col {
     min-width: 0px;
 }
+
+#filter_select_team_btn {
+    min-width: 215px;
+}

@@ -19,6 +19,7 @@ const reserveModule = ((jq) => {
     let isMouseDown = false;
     let startCellIndex = null;
     let _selectRoom;
+    let _filterTeam = "";
     const DateTime = luxon.DateTime;
     const today = DateTime.now();
     const todayFormatted = today.toFormat("yyyy-MM-dd");
@@ -129,7 +130,8 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const getReservationData = ({ date }) => {
-        const url = `${baseurl}/api/reservation/list?book_date=${date}`;
+        const url = `${baseurl}/api/reservation/list?book_date=${date}&team_key=${_filterTeam}`;
+        console.log("url", url);
         return new Promise((resolve, reject) => {
             jq("#loader").show();
             jq.ajax({
@@ -411,6 +413,7 @@ const reserveModule = ((jq) => {
         jq("#team_select").empty();
         jq("#login_team_select").empty();
         jq("#remove_team_select").empty();
+        jq("#filter_team_select").empty();
 
         // _teams 배열을 순회하며 각 team의 이름을 드롭다운 목록에 추가합니다.
         _teams.forEach((team) => {
@@ -440,19 +443,30 @@ const reserveModule = ((jq) => {
                     .data("value", team.name)
                     .data("key", team.key)
             );
+            const filterTeamListItem = jq("<li></li>").append(
+                jq("<a></a>")
+                    .addClass("dropdown-item")
+                    .attr("href", "#")
+                    .text(team.name)
+                    .data("value", team.name)
+                    .data("key", team.key)
+            );
 
             // 각각의 드롭다운에 추가
             jq("#login_team_select").append(loginListItem);
             jq("#team_select").append(teamListItem);
             jq("#remove_team_select").append(removeTeamListItem);
+            jq("#filter_team_select").append(filterTeamListItem);
         });
+        jq("#filter_team_select").append(
+            `<li><a href="#" class="dropdown-item">전체보기</a></li>`
+        );
     };
 
     _pubFn.load = async () => {
         await reserveModule.loadMeetingRooms();
         _teams = await getTeamList();
         setTeams();
-        console.log("teams:", _teams);
         _reservationData = await getReservationData({ date: _searchDate });
 
         displayReservationData({ reservationData: _reservationData });
@@ -1004,6 +1018,22 @@ const reserveModule = ((jq) => {
             } catch (error) {
                 alert("팀을 삭제하는데 오류가 발생했습니다.:", error);
             }
+        });
+        jq("#filter_team_select").on("click", ".dropdown-item", function () {
+            // 클릭된 항목의 텍스트를 가져옴
+            const selectedText = jq(this).text();
+            const selectedKey = jq(this).data("key");
+            console.log("selectedText:", selectedText);
+            console.log("selectedKey:", selectedKey);
+            // 버튼의 텍스트를 선택된 항목의 텍스트로 변경
+            jq("#filter_select_team_btn").text(selectedText);
+            jq("#filter_select_team_btn").data("key", selectedKey);
+
+            // _filterTeam에 선택된 팀의 key 저장
+            _filterTeam = selectedKey;
+            console.log("_ftlerteam:", _filterTeam);
+            // 필터 적용 후 예약 목록 재로드
+            reserveModule.load();
         });
     };
     /**

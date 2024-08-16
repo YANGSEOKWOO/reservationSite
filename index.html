@@ -64,7 +64,11 @@
 <body>
     <nav class="navbar navbar-expand-lg border-bottom ">
         <div class="container-fluid">
-            <img src="./src/colavo_logo.png" alt="colavo_logo" class="navbar-brand" style="width: 35px; height: auto;">
+            <a href="#">
+                <img src="./src/colavo_logo.png" alt="colavo_logo" class="navbar-brand"
+                    style="width: 35px; height: auto;">
+            </a>
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -81,6 +85,16 @@
                             <div>JihooSoft</div>
                         </li>
                     </ul>
+                </div>
+                <div class="search-container middle-css">
+                    <i class="fa-solid fa-magnifying-glass fa-xl" style="color: #cccccc;"></i>
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" id="filter_select_team_btn"
+                            data-bs-toggle="dropdown">필터링할 팀을 선택해 주세요</button>
+                        <ul class="dropdown-menu" id="filter_team_select">
+                            <li><a href="#" class="dropdown-item">전체보기</a></li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="login-container d-flex justify-content-end" style="max-height: 25px; height: 25px;">
                     <form id="login_form" class="d-flex align-items-center gap-2" style="height: 100%;">
@@ -171,8 +185,11 @@
                     <i class="bi bi-caret-right h1"></i>
                 </div>
                 <div class="button-container gap-2">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#reservation_modal">예약하기</button>
+                    <button type="button" class="btn btn-primary gap-2 middle-css rounded" data-bs-toggle="modal"
+                        data-bs-target="#reservation_modal" style="width: 110px; height: 35px;"><i
+                            class="fa-solid fa-circle-plus" style="color: #ffffff;"></i>
+                        <p>예약하기</p>
+                    </button>
                 </div>
             </div>
             <div class="reservation-container mx-5" style="display: none;">
@@ -261,6 +278,9 @@
                     </tbody>
                 </table>
                 <h1 style="color: #d5d5d5;">회의실이 없습니다. 회의실을 추가해주세요</h1>
+            </div>
+            <div class="bottom-container">
+
             </div>
         </div>
     </div>
