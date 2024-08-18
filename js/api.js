@@ -10,6 +10,37 @@ const jq = $.noConflict();
 //     finance: "#6610f2",
 // };
 
+const sanitizeInput = (input) => {
+    // null 또는 undefined인 경우 빈 문자열 반환
+    if (input === null || input === undefined) {
+        return "";
+    }
+
+    // 입력값이 문자열이 아닌 경우, 문자열로 변환
+    if (typeof input !== "string") {
+        input = String(input);
+    }
+
+    // 위험한 태그나 패턴이 포함된 경우, 즉시 빈 문자열 반환
+    const dangerousPatterns = [
+        /<script.*?>.*?<\/script>/gi, // <script> 태그 차단
+        /alert\(/gi, // alert() 함수 호출 차단
+        /onerror\s*=/gi, // onerror 이벤트 차단
+        /javascript:/gi, // javascript: URL 차단
+        /<img.*?onerror\s*=/gi, // 이미지 태그의 onerror 이벤트 차단
+    ];
+
+    // 위험한 패턴이 입력값에 포함되어 있으면, 빈 문자열 반환
+    for (const pattern of dangerousPatterns) {
+        if (pattern.test(input)) {
+            return ""; // 위험한 입력 발견 시 빈 문자열 반환
+        }
+    }
+
+    // 태그(<, >)는 제거
+    return input.replace(/[<>]/g, "");
+};
+
 const reserveModule = ((jq) => {
     let _pubFn = {};
     let _reservationData;
@@ -31,7 +62,9 @@ const reserveModule = ((jq) => {
      * TODO:: 팀 생성 API
      */
     const createTeam = async ({ teamData }) => {
-        console.log("teamData:", teamData);
+        teamData.name = sanitizeInput(teamData.name);
+        teamData.color = sanitizeInput(teamData.color);
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 type: "POST",
@@ -49,7 +82,9 @@ const reserveModule = ((jq) => {
         });
     };
     const removeTeam = ({ teamKey }) => {
-        const url = `${baseurl}/api/team/delete/${teamKey}`;
+        const sanitizedTeamKey = sanitizeInput(teamKey);
+        const url = `${baseurl}/api/team/delete/${sanitizedTeamKey}`;
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 type: "DELETE",
@@ -78,12 +113,14 @@ const reserveModule = ((jq) => {
      */
     const getMeetingRooms = () => {
         const url = `${baseurl}/api/reservation/meetingrooms/list`;
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 type: "GET",
                 url: url,
             })
                 .done((response) => {
+                    // 서버에서 받은 데이터는 바로 DOM에 삽입하지 않고, 필요한 필터링을 적용할 수 있습니다.
                     resolve(response);
                 })
                 .fail((error) => {
@@ -110,7 +147,10 @@ const reserveModule = ((jq) => {
         });
     };
     const removeRoom = ({ roomKey }) => {
-        const url = `${baseurl}/api/reservation/delete/room/${roomKey}`;
+        // 사용자 입력 필터링
+        const sanitizedRoomKey = sanitizeInput(roomKey);
+        const url = `${baseurl}/api/reservation/delete/room/${sanitizedRoomKey}`;
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 type: "DELETE",
@@ -130,8 +170,12 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const getReservationData = ({ date }) => {
-        const url = `${baseurl}/api/reservation/list?book_date=${date}&team_key=${_filterTeam}`;
-        console.log("url", url);
+        // 사용자 입력 필터링
+        const sanitizedDate = sanitizeInput(date);
+        const sanitizedTeamKey = sanitizeInput(_filterTeam);
+
+        const url = `${baseurl}/api/reservation/list?book_date=${sanitizedDate}&team_key=${sanitizedTeamKey}`;
+
         return new Promise((resolve, reject) => {
             jq("#loader").show();
             jq.ajax({
@@ -140,7 +184,7 @@ const reserveModule = ((jq) => {
             })
                 .done((response) => {
                     jq("#loader").hide();
-                    resolve(response);
+                    resolve(response); // 서버 응답은 안전하다고 가정
                 })
                 .fail((error) => {
                     reject(error);
@@ -195,9 +239,9 @@ const reserveModule = ((jq) => {
             const team = jq(this).data("team");
             const isAdmin = getCookie("admin");
 
-            // 본인의 팀이 아니라면, 삭제와 수정이 불가능
             const urlParams = new URLSearchParams(window.location.search);
-            const currentTeam = urlParams.get("team");
+            const currentTeam = sanitizeInput(urlParams.get("team")); // URL 파라미터 필터링
+
             if (currentTeam !== team && !isAdmin) {
                 jq("#del_reservation_btn").hide();
                 jq("#edit_reservation_btn").hide();
@@ -211,7 +255,6 @@ const reserveModule = ((jq) => {
             jq(".start-time").val(`${start}`);
             jq(".end-time").val(`${end}`);
             jq(".team-name").val(`${team}`).data({ team: team });
-
             jq("#detail_reservation_content").data({
                 id: id,
                 room: room,
@@ -237,14 +280,22 @@ const reserveModule = ((jq) => {
         book_date,
         team_name,
     }) => {
-        const url = `${baseurl}/api/reservation/update/${id}`;
+        // 사용자 입력 필터링
+        const sanitizedRoomName = sanitizeInput(room_name);
+        const sanitizedStartTime = sanitizeInput(start_time);
+        const sanitizedEndTime = sanitizeInput(end_time);
+        const sanitizedBookDate = sanitizeInput(book_date);
+        const sanitizedTeamName = sanitizeInput(team_name);
+
+        const url = `${baseurl}/api/reservation/update/${sanitizeInput(id)}`;
         const data = JSON.stringify({
-            room_name: room_name,
-            team_name: team_name,
-            book_date: book_date,
-            start_time: `${start_time}`,
-            end_time: `${end_time}`,
+            room_name: sanitizedRoomName,
+            team_name: sanitizedTeamName,
+            book_date: sanitizedBookDate,
+            start_time: sanitizedStartTime,
+            end_time: sanitizedEndTime,
         });
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: url,
@@ -267,6 +318,11 @@ const reserveModule = ((jq) => {
      * @returns {Promise} 로그인 성공여부, admin 여부
      */
     const login = ({ loginData }) => {
+        // 사용자 입력 필터링
+        loginData.id = sanitizeInput(loginData.id);
+        loginData.password = sanitizeInput(loginData.password);
+        loginData.team = sanitizeInput(loginData.team); // 팀 필터링
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 type: "POST",
@@ -290,9 +346,12 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const deleteReservationData = ({ id }) => {
+        // 사용자 입력 필터링
+        const sanitizedId = sanitizeInput(id);
+
         return new Promise((resolve, reject) => {
             jq.ajax({
-                url: baseurl + `/api/reservation/delete/${id}`, // API 엔드포인트
+                url: `${baseurl}/api/reservation/delete/${sanitizedId}`,
                 type: "DELETE",
             })
                 .done(() => {
@@ -316,16 +375,22 @@ const reserveModule = ((jq) => {
         start_time,
         end_time,
     }) => {
+        // 사용자 입력 필터링
+        const sanitizedRoomName = sanitizeInput(room_name);
+        const sanitizedTeamName = sanitizeInput(team_name);
+        const sanitizedBookDate = sanitizeInput(book_date);
+        const sanitizedStartTime = sanitizeInput(start_time);
+        const sanitizedEndTime = sanitizeInput(end_time);
+
         const url = `${baseurl}/api/reservation/create`;
-        const formattedStartTime = `${start_time}:00`;
-        const formattedEndTime = `${end_time}:00`;
         const data = JSON.stringify({
-            room_name: room_name,
-            team_name: team_name,
-            book_date: book_date,
-            start_time: formattedStartTime,
-            end_time: formattedEndTime,
+            room_name: sanitizedRoomName,
+            team_name: sanitizedTeamName,
+            book_date: sanitizedBookDate,
+            start_time: `${sanitizedStartTime}:00`,
+            end_time: `${sanitizedEndTime}:00`,
         });
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: url,
@@ -349,9 +414,14 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const createRoom = ({ roomName }) => {
-        const data = {
-            name: roomName,
-        };
+        // 사용자 입력 필터링
+        const sanitizedRoomName = sanitizeInput(roomName);
+
+        const data = { name: sanitizedRoomName };
+        if (sanitizedRoomName === "") {
+            throw new Error("정상적인 값을 입력해 주세요");
+        }
+
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: `${baseurl}/api/reservation/meetingroom/create`,
@@ -381,9 +451,15 @@ const reserveModule = ((jq) => {
      * @returns
      */
     const isTimeSlotAvailable = (date, room, start, end, excludeId = null) => {
+        // 사용자 입력 필터링
+        const sanitizedDate = sanitizeInput(date);
+        const sanitizedRoom = sanitizeInput(room);
+        const sanitizedStart = sanitizeInput(start);
+        const sanitizedEnd = sanitizeInput(end);
+
         const reservations = _reservationData;
-        const startTime = timeToNum(start);
-        const endTime = timeToNum(end);
+        const startTime = timeToNum(sanitizedStart);
+        const endTime = timeToNum(sanitizedEnd);
 
         for (const reservation of reservations) {
             const reservationDate = reservation.book_date;
@@ -391,8 +467,8 @@ const reserveModule = ((jq) => {
             const reservationEndTime = timeToNum(reservation.end_time);
 
             if (
-                reservation.room === room &&
-                reservationDate === date &&
+                reservation.room === sanitizedRoom &&
+                reservationDate === sanitizedDate &&
                 reservation.id !== parseInt(excludeId)
             ) {
                 if (
@@ -416,16 +492,17 @@ const reserveModule = ((jq) => {
         jq("#filter_team_select").empty();
         jq("#color-items").empty();
 
-        // _teams 배열을 순회하며 각 team의 이름을 드롭다운 목록에 추가합니다.
         _teams.forEach((team) => {
-            console.log("team;", team);
-            // 두 개의 별도 listItem을 각각 생성
+            // 팀 이름과 색상을 필터링
+            const sanitizedTeamName = sanitizeInput(team.name);
+            const sanitizedTeamColor = sanitizeInput(team.color);
+
             const loginListItem = jq("<li></li>").append(
                 jq("<a></a>")
                     .addClass("dropdown-item")
                     .attr("href", "#")
-                    .text(team.name)
-                    .data("value", team.name)
+                    .text(sanitizedTeamName) // 필터링된 값 삽입
+                    .data("value", sanitizedTeamName)
                     .data("key", team.key)
             );
 
@@ -433,28 +510,29 @@ const reserveModule = ((jq) => {
                 jq("<a></a>")
                     .addClass("dropdown-item")
                     .attr("href", "#")
-                    .text(team.name)
-                    .data("value", team.name)
+                    .text(sanitizedTeamName)
+                    .data("value", sanitizedTeamName)
                     .data("key", team.key)
             );
+
             const removeTeamListItem = jq("<li></li>").append(
                 jq("<a></a>")
                     .addClass("dropdown-item")
                     .attr("href", "#")
-                    .text(team.name)
-                    .data("value", team.name)
+                    .text(sanitizedTeamName)
+                    .data("value", sanitizedTeamName)
                     .data("key", team.key)
             );
+
             const filterTeamListItem = jq("<li></li>").append(
                 jq("<a></a>")
                     .addClass("dropdown-item")
                     .attr("href", "#")
-                    .text(team.name)
-                    .data("value", team.name)
+                    .text(sanitizedTeamName)
+                    .data("value", sanitizedTeamName)
                     .data("key", team.key)
             );
 
-            // 각각의 드롭다운에 추가
             jq("#login_team_select").append(loginListItem);
             jq("#team_select").append(teamListItem);
             jq("#remove_team_select").append(removeTeamListItem);
@@ -462,11 +540,12 @@ const reserveModule = ((jq) => {
 
             const colorItem = `
             <div class="col-3 d-flex align-items-center m-1">
-                    <div style="background-color: ${team.color}; width: 20px; height: 20px; margin-right: 10px; border-radius: 50%;"></div>
-                    <p class="h6 m-0">${team.name}</p>
+                    <div style="background-color: ${sanitizedTeamColor}; width: 20px; height: 20px; margin-right: 10px; border-radius: 50%;"></div>
+                    <p class="h6 m-0">${sanitizedTeamName}</p>
             </div>`;
             jq("#color-items").append(colorItem);
         });
+
         jq("#filter_team_select").append(
             `<li><a href="#" class="dropdown-item">전체보기</a></li>`
         );
@@ -490,7 +569,7 @@ const reserveModule = ((jq) => {
             })
             .on("dp.change", function (e) {
                 if (!e.date || !e.oldDate || !e.date.isSame(e.oldDate, "day")) {
-                    const dateText = e.date.format("YYYY-MM-DD");
+                    const dateText = sanitizeInput(e.date.format("YYYY-MM-DD")); // 날짜 필터링
                     _searchDate = dateText;
                     reserveModule.load();
                 }
@@ -502,11 +581,16 @@ const reserveModule = ((jq) => {
         jq("#reservation_from")
             .datetimepicker({
                 format: "LT", // 시간과 분만 표시
-                stepping: 30, // 1시간 간격
+                stepping: 30, // 30분 간격
             })
             .on("dp.change", function handleFromDateChange(e) {
                 jq("#reservation_to").data("DateTimePicker").minDate(e.date);
             });
+
+        jq("#reservation_to").datetimepicker({
+            format: "LT", // 시간과 분만 표시
+            stepping: 30, // 30분 간격
+        });
 
         jq("#reservation_to").datetimepicker({
             format: "LT", // 시간과 분만 표시
@@ -516,8 +600,12 @@ const reserveModule = ((jq) => {
         // 예약하기 버튼 클릭 이벤트
         jq("#reserve_btn").on("click", async function (e) {
             e.preventDefault();
-            const room = jq("#room_select .dropdown-item.active").data("value");
-            const team = jq("#team_select .dropdown-item.active").data("value");
+            const room = sanitizeInput(
+                jq("#room_select .dropdown-item.active").data("value")
+            );
+            const team = sanitizeInput(
+                jq("#team_select .dropdown-item.active").data("value")
+            );
             const datePicker = jq("#reservation_date").data("DateTimePicker");
             const fromPicker = jq("#reservation_from").data("DateTimePicker");
             const toPicker = jq("#reservation_to").data("DateTimePicker");
@@ -527,9 +615,9 @@ const reserveModule = ((jq) => {
                 return;
             }
 
-            const date = datePicker.date().format("YYYY-MM-DD");
-            const start = fromPicker.date().format("HH:mm");
-            const end = toPicker.date().format("HH:mm");
+            const date = sanitizeInput(datePicker.date().format("YYYY-MM-DD")); // 날짜 필터링
+            const start = sanitizeInput(fromPicker.date().format("HH:mm")); // 시간 필터링
+            const end = sanitizeInput(toPicker.date().format("HH:mm")); // 시간 필터링
 
             if (!isTimeSlotAvailable(date, room, start, end)) {
                 alert("이미 예약된 시간이 있습니다.");
@@ -566,10 +654,10 @@ const reserveModule = ((jq) => {
             jq("#team_select .dropdown-item").removeClass("active");
         });
 
-        // 드롭다운 선택 이벤트
+        // 회의실 선택
         jq(document).on("click", "#room_select .dropdown-item", function (e) {
             e.preventDefault();
-            const roomText = jq(this).text();
+            const roomText = sanitizeInput(jq(this).text()); // 선택한 회의실 이름 필터링
             jq("#room_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
             jq("#select_room_btn").text(roomText);
@@ -578,14 +666,14 @@ const reserveModule = ((jq) => {
         // 팀 선택
         jq(document).on("click", "#team_select .dropdown-item", function (e) {
             e.preventDefault();
-            const teamText = jq(this).text();
+            const teamText = sanitizeInput(jq(this).text()); // 선택한 팀 이름 필터링
             jq("#team_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
             jq("#team_select_btn").text(teamText);
         });
         jq("#login_team_select").on("click", ".dropdown-item", function (e) {
             e.preventDefault();
-            const teamText = jq(this).text();
+            const teamText = sanitizeInput(jq(this).text());
             console.log("teamText:", teamText);
             jq("#login_team_select .dropdown-item").removeClass("active");
             jq(this).addClass("active");
@@ -595,27 +683,26 @@ const reserveModule = ((jq) => {
         // 로그인 버튼 클릭 이벤트
         jq("#login_btn").on("click", async function (e) {
             e.preventDefault();
-            const userName = jq("#username").val();
-            const password = jq("#password").val();
-            const team = jq("#login_team_select .dropdown-item.active").data(
-                "value"
+            const userName = sanitizeInput(jq("#username").val()); // 사용자 입력 필터링
+            const password = sanitizeInput(jq("#password").val()); // 사용자 입력 필터링
+            const team = sanitizeInput(
+                jq("#login_team_select .dropdown-item.active").data("value")
             );
-            // TODO:: 로직수정
+
             if (!userName || !password) {
                 alert("모든 필드를 채워주세요.");
                 return;
             }
-
-            // 로그인 처리 (여기서는 URL 쿼리로 아이디와 팀명을 전달)
 
             const loginData = {
                 id: userName,
                 password: password,
                 team: team ? team : "",
             };
+
             try {
-                const a = await login({ loginData: loginData });
-                if (a.isAdmin === "true") {
+                const response = await login({ loginData: loginData });
+                if (response.isAdmin === "true") {
                     setCookie("admin", "true", 1);
                     _pubFn.checkLoginStatus();
                 } else {
@@ -646,13 +733,15 @@ const reserveModule = ((jq) => {
          */
         jq("#del_reservation_btn").on("click", async function (e) {
             e.preventDefault();
-            const id = jq("#detail_reservation_content").data("id");
-            const reservationTeam = jq("#detail_reservation_content").data(
-                "team"
-            );
+            const id = sanitizeInput(
+                jq("#detail_reservation_content").data("id")
+            ); // 예약 ID 필터링
+            const reservationTeam = sanitizeInput(
+                jq("#detail_reservation_content").data("team")
+            ); // 팀 이름 필터링
 
             const urlParams = new URLSearchParams(window.location.search);
-            const currentTeam = urlParams.get("team");
+            const currentTeam = sanitizeInput(urlParams.get("team"));
             const isAdmin = getCookie("admin");
 
             if (reservationTeam !== currentTeam && !isAdmin) {
@@ -660,7 +749,6 @@ const reserveModule = ((jq) => {
                 return;
             }
 
-            const date = _searchDate;
             try {
                 await deleteReservationData({ id: id });
             } catch (error) {
@@ -671,7 +759,7 @@ const reserveModule = ((jq) => {
             jq("#detail_reservation_modal").modal("hide");
 
             // 새로운 예약 데이터로 업데이트
-            reserveModule.load(date);
+            reserveModule.load(_searchDate);
         });
 
         /**
@@ -679,23 +767,23 @@ const reserveModule = ((jq) => {
          */
         jq(document).on("click", "#edit_reservation_btn", function (e) {
             e.preventDefault();
-            jq(".detail_reservation_item").prop("readonly", false);
+            jq(".detail_reservation_item").prop("readonly", false); // 읽기 전용 해제
 
             // 현재 선택된 회의실 값
-            const currentRoom = jq(".room-name").val();
+            const currentRoom = sanitizeInput(jq(".room-name").val()); // 방 이름 필터링
 
             // 회의실 옵션 동적 생성 및 기본값 설정
             let roomOptions = `<select class="form-control detail_reservation_item room-name">`;
             _meetingRooms.forEach((room) => {
-                roomOptions += `<option value="${room.name}" ${
-                    currentRoom === room.name ? "selected" : ""
-                }>${room.name}</option>`;
+                const sanitizedRoomName = sanitizeInput(room.name); // 각 회의실 이름 필터링
+                roomOptions += `<option value="${sanitizedRoomName}" ${
+                    currentRoom === sanitizedRoomName ? "selected" : ""
+                }>${sanitizedRoomName}</option>`;
             });
             roomOptions += `</select>`;
-            jq(".room-name").replaceWith(roomOptions);
+            jq(".room-name").replaceWith(roomOptions); // 기존 방 이름 필드를 드롭다운으로 교체
 
-            // 시간 필드를 datetimepicker로 변경하고 기본값을 설정
-            // 기존의 값을 moment로 파싱
+            // 기존의 시작 시간과 종료 시간을 moment로 파싱
             const startTimeVal = moment(jq(".start-time").val(), "HH:mm");
             const endTimeVal = moment(jq(".end-time").val(), "HH:mm");
 
@@ -709,46 +797,47 @@ const reserveModule = ((jq) => {
             jq(".start-time").datetimepicker({
                 format: "HH:mm",
                 stepping: 30,
-                defaultDate: startTimeVal, // 기본값 설정
+                defaultDate: startTimeVal, // 시작 시간 기본값 설정
             });
 
             jq(".end-time").datetimepicker({
                 format: "HH:mm",
                 stepping: 30,
-                defaultDate: endTimeVal, // 기본값 설정
+                defaultDate: endTimeVal, // 종료 시간 기본값 설정
             });
 
             // 팀 필드를 드롭다운으로 변경하고 기본값을 설정
-            const currentTeam = jq(".team-name").val();
+            const currentTeam = sanitizeInput(jq(".team-name").val()); // 팀 이름 필터링
             let teamOptions = `<select class="form-control detail_reservation_item team-name">`;
             _teams.forEach((team) => {
-                teamOptions += `<option value="${team.name}" ${
-                    currentTeam === team.name ? "selected" : ""
-                }>${team.name}</option>`;
+                const sanitizedTeamName = sanitizeInput(team.name); // 각 팀 이름 필터링
+                teamOptions += `<option value="${sanitizedTeamName}" ${
+                    currentTeam === sanitizedTeamName ? "selected" : ""
+                }>${sanitizedTeamName}</option>`;
             });
             teamOptions += `</select>`;
-            jq(".team-name").replaceWith(teamOptions);
+            jq(".team-name").replaceWith(teamOptions); // 기존 팀 필드를 드롭다운으로 교체
 
             // 포커스를 회의실 드롭다운으로 이동
             jq(".room-name").focus();
-            jq(".detail_reservation_item").addClass("blinking");
+            jq(".detail_reservation_item").addClass("blinking"); // 시각적 효과 추가
 
             // 수정 버튼을 저장 버튼으로 변경
-            jq(this).text("저장하기").attr("id", "save_reservation_btn");
+            jq(this).text("저장하기").attr("id", "save_reservation_btn"); // 버튼 텍스트 및 ID 변경
         });
 
         // 저장하기 버튼 클릭 이벤트
         jq(document).on("click", "#save_reservation_btn", async function (e) {
             e.preventDefault();
-            const id = jq(".id").val();
-            const roomName = jq(".room-name").val();
 
-            // 시작 시간과 종료 시간을 각각 가져옴
-            const startTime = jq(".start-time").val();
-            const endTime = jq(".end-time").val();
+            // 사용자가 수정한 예약 데이터에 대해 필터링 적용
+            const id = sanitizeInput(jq(".id").val()); // 예약 ID 필터링
+            const roomName = sanitizeInput(jq(".room-name").val()); // 방 이름 필터링
+            const startTime = sanitizeInput(jq(".start-time").val()); // 시작 시간 필터링
+            const endTime = sanitizeInput(jq(".end-time").val()); // 종료 시간 필터링
+            const teamName = sanitizeInput(jq(".team-name").val()); // 팀 이름 필터링
 
-            const teamName = jq(".team-name").val();
-            // 수정된 시간과 방으로 예약 가능 여부를 확인
+            // 수정된 시간과 방으로 예약 가능 여부 확인
             const isAvailable = isTimeSlotAvailable(
                 _searchDate,
                 roomName,
@@ -762,8 +851,8 @@ const reserveModule = ((jq) => {
                 return; // 시간이 겹친다면 저장하지 않음
             }
 
-            // 서버에 수정된 내용을 보내는 함수 호출
             try {
+                // 서버에 수정된 예약 데이터를 전송
                 await updateReservationData({
                     id,
                     room_name: roomName,
@@ -778,9 +867,9 @@ const reserveModule = ((jq) => {
                 jq(".detail_reservation_item").removeClass("blinking");
 
                 // 버튼 텍스트를 "수정하기"로 변경하고, id를 다시 edit_reservation_btn으로 변경
-                jq(this).text("수정하기").attr("id", "edit_reservation_btn");
+                jq(this).text("수정하기").attr("id", "edit_reservation_btn"); // 버튼 복구
                 jq("#detail_reservation_modal").modal("hide");
-                reserveModule.load();
+                reserveModule.load(); // 예약 데이터를 다시 로드
             } catch (error) {
                 alert("수정하는데 오류가 발생했습니다.");
             }
@@ -826,10 +915,14 @@ const reserveModule = ((jq) => {
         });
         jq(document).on("mousedown", ".reserve-items td", function (e) {
             if (jq(this).hasClass("reserved")) return; // 예약된 셀은 무시
-            const roomName = jq(e.target)
-                .closest(".reserve-items td")
-                .closest("tr")
-                .data("room");
+
+            // 방 이름 필터링
+            const roomName = sanitizeInput(
+                jq(e.target)
+                    .closest(".reserve-items td")
+                    .closest("tr")
+                    .data("room")
+            );
 
             isMouseDown = true;
             startCellIndex = jq(this).index();
@@ -842,13 +935,15 @@ const reserveModule = ((jq) => {
         });
 
         jq(document).on("mouseover", ".reserve-items td", function (e) {
-            const roomName = jq(e.target)
-                .closest(".reserve-items td")
-                .closest("tr")
-                .data("room");
+            // 필터링된 방 이름으로 작업
+            const roomName = sanitizeInput(
+                jq(e.target)
+                    .closest(".reserve-items td")
+                    .closest("tr")
+                    .data("room")
+            );
             if (isMouseDown) {
                 const cellIndex = jq(this).index();
-
                 if (
                     cellIndex >= startCellIndex &&
                     !jq(this).hasClass("reserved") &&
@@ -865,7 +960,9 @@ const reserveModule = ((jq) => {
         jq(document).on("mouseup", function (e) {
             const target = jq(e.target);
             const tdElement = target.closest(".reserve-items td");
-            const roomName = tdElement.closest("tr").data("room");
+            const roomName = sanitizeInput(
+                tdElement.closest("tr").data("room")
+            ); // 방 이름 필터링
 
             if (isMouseDown) {
                 isMouseDown = false;
@@ -877,7 +974,7 @@ const reserveModule = ((jq) => {
                     const endTime = calculateTime(
                         _selectedCells[_selectedCells.length - 1].index() + 2
                     );
-                    showReservationModal(startTime, endTime, _selectRoom);
+                    showReservationModal(startTime, endTime, roomName); // 필터링된 방 이름 전달
                 }
 
                 // 선택한 셀 초기화
@@ -903,11 +1000,13 @@ const reserveModule = ((jq) => {
             jq("#reservation_date")
                 .data("DateTimePicker")
                 .date(moment(_searchDate, "YYYY-MM-DD"));
+
             const matchingItem = jq("#room_select .dropdown-item").filter(
                 function () {
-                    return jq(this).data("value") === roomName;
+                    return sanitizeInput(jq(this).data("value")) === roomName; // 방 이름 필터링
                 }
             );
+
             matchingItem.addClass("active");
             jq("#select_room_btn").text(roomName);
 
@@ -924,34 +1023,37 @@ const reserveModule = ((jq) => {
         }
         // 회의실 드롭다운 메뉴 추가 (삭제)
         jq("#remove_meetingroom_modal").on("click", function () {
-            // 기존의 목록을 비웁니다.
             jq("#delete_room_select").empty();
 
-            // _meetingRooms 배열을 순회하며 각 room의 이름을 드롭다운 목록에 추가합니다.
+            // 회의실 목록을 드롭다운에 추가
             _meetingRooms.forEach((room) => {
+                const sanitizedRoomName = sanitizeInput(room.name); // 방 이름 필터링
+                const sanitizedRoomKey = sanitizeInput(room.id); // 방 키 필터링
                 const listItem = jq("<li></li>").append(
                     jq("<a></a>")
                         .addClass("dropdown-item")
                         .attr("href", "#")
-                        .text(room.name)
-                        .data("value", room.name)
-                        .data("key", room.id)
+                        .text(sanitizedRoomName)
+                        .data("value", sanitizedRoomName)
+                        .data("key", sanitizedRoomKey)
                 );
                 jq("#delete_room_select").append(listItem);
             });
         });
         // 회의실 드롭다운 메뉴 선택 시, 텍스트변경
         jq("#delete_room_select").on("click", ".dropdown-item", function () {
-            // 클릭된 항목의 텍스트를 가져옴
-            const selectedText = jq(this).text();
-            const seletedKey = jq(this).data("key");
-            // 버튼의 텍스트를 선택된 항목의 텍스트로 변경
+            const selectedText = sanitizeInput(jq(this).text()); // 선택된 텍스트 필터링
+            const selectedKey = sanitizeInput(jq(this).data("key")); // 선택된 키 필터링
+
             jq("#delete_select_room_btn").text(selectedText);
-            jq("#delete_select_room_btn").data("key", seletedKey);
+            jq("#delete_select_room_btn").data("key", selectedKey);
         });
         // 회의실 삭제 버튼
         jq("#remove_meetingroom").on("click", async function () {
-            const removeKey = jq("#delete_select_room_btn").data("key");
+            const removeKey = sanitizeInput(
+                jq("#delete_select_room_btn").data("key")
+            ); // 회의실 키 필터링
+
             try {
                 await removeRoom({ roomKey: removeKey });
                 alert("회의실 삭제 완료");
@@ -966,33 +1068,29 @@ const reserveModule = ((jq) => {
         });
         // 회의실 추가 버튼
         jq("#create_meetingroom").on("click", async function () {
-            const roomName = jq("#meetingroom_name").val();
+            const roomName = sanitizeInput(jq("#meetingroom_name").val()); // 회의실 이름 필터링
+
             try {
                 await createRoom({ roomName: roomName });
                 alert("회의실 생성이 완료되었습니다.");
                 jq("#create_meetingroom_modal").modal("hide");
                 reserveModule.load();
             } catch (error) {
-                alert("회의실 생성하는데 오류가 발생했습니다.");
+                alert(error);
                 console.log("error:", error);
-                return;
             }
         });
         // 팀생성
         jq("#create_team").on("click", async function () {
-            const teamName = jq("#team_name").val();
-            const teamColor = jq("#team_color").val(); // 선택된 색상값 가져오기
+            const teamName = sanitizeInput(jq("#team_name").val()); // 팀 이름 필터링
+            const teamColor = sanitizeInput(jq("#team_color").val()); // 팀 색상 필터링
 
             if (!teamName) {
                 alert("팀 이름을 입력해 주세요.");
                 return;
             }
 
-            // 팀 정보를 서버로 전송하거나 로컬에서 처리하는 로직 추가
             try {
-                // 예시로, 콘솔에 팀 이름과 색상 출력
-                console.log("팀 이름:", teamName);
-                console.log("팀 색상:", teamColor);
                 const teamData = {
                     name: teamName,
                     color: teamColor,
@@ -1001,6 +1099,7 @@ const reserveModule = ((jq) => {
 
                 alert("팀이 추가되었습니다.");
                 reserveModule.load();
+                jq("#team_name").val("");
                 jq("#create_team_modal").modal("hide");
             } catch (error) {
                 console.error("팀을 추가하는데 오류가 발생했습니다:", error);
@@ -1008,17 +1107,18 @@ const reserveModule = ((jq) => {
             }
         });
         jq("#remove_team_select").on("click", ".dropdown-item", function () {
-            // 클릭된 항목의 텍스트를 가져옴
-            const selectedText = jq(this).text();
-            const seletedKey = jq(this).data("key");
-            console.log("selectedText:", selectedText);
-            console.log("selectedKey:", seletedKey);
-            // 버튼의 텍스트를 선택된 항목의 텍스트로 변경
+            const selectedText = sanitizeInput(jq(this).text()); // 선택된 텍스트 필터링
+            const selectedKey = sanitizeInput(jq(this).data("key")); // 선택된 키 필터링
+
             jq("#delete_select_team_btn").text(selectedText);
-            jq("#delete_select_team_btn").data("key", seletedKey);
+            jq("#delete_select_team_btn").data("key", selectedKey);
         });
+
         jq("#remove_team").on("click", async function () {
-            const removeKey = jq("#delete_select_team_btn").data("key");
+            const removeKey = sanitizeInput(
+                jq("#delete_select_team_btn").data("key")
+            ); // 팀 키 필터링
+
             try {
                 await removeTeam({ teamKey: removeKey });
                 alert("팀 삭제 완료!");
@@ -1029,19 +1129,18 @@ const reserveModule = ((jq) => {
             }
         });
         jq("#filter_team_select").on("click", ".dropdown-item", function () {
-            // 클릭된 항목의 텍스트를 가져옴
-            const selectedText = jq(this).text();
-            const selectedKey = jq(this).data("key");
-            console.log("selectedText:", selectedText);
-            console.log("selectedKey:", selectedKey);
-            // 버튼의 텍스트를 선택된 항목의 텍스트로 변경
-            jq("#filter_select_team_btn").text(selectedText);
-            jq("#filter_select_team_btn").data("key", selectedKey);
+            // 선택된 팀 이름과 팀 키 필터링
+            const selectedText = sanitizeInput(jq(this).text()); // 선택된 팀 이름 필터링
+            const selectedKey = sanitizeInput(jq(this).data("key")); // 선택된 팀 키 필터링
 
-            // _filterTeam에 선택된 팀의 key 저장
+            // 드롭다운 버튼의 텍스트를 선택된 팀 이름으로 변경
+            jq("#filter_select_team_btn").text(selectedText); // 안전하게 팀 이름 설정
+            jq("#filter_select_team_btn").data("key", selectedKey); // 팀 키 저장
+
+            // 선택된 팀의 key를 필터링 변수에 저장
             _filterTeam = selectedKey;
-            console.log("_ftlerteam:", _filterTeam);
-            // 필터 적용 후 예약 목록 재로드
+
+            // 필터링된 팀을 기준으로 예약 목록 재로드
             reserveModule.load();
         });
     };
@@ -1056,27 +1155,26 @@ const reserveModule = ((jq) => {
             console.log("meetingRooms:", _meetingRooms);
             console.log("mettingromms.length:", typeof _meetingRooms.length);
             if (_meetingRooms.length === 0) {
-                console.log("1");
                 jq(".reservation-container").hide();
                 jq("#none_container").show();
             } else {
-                console.log("2");
                 jq(".reservation-container").show();
                 jq("#none_container").css("display", "none");
             }
             const roomRows = {};
             jq("#room_select").empty();
             _meetingRooms.forEach((room) => {
+                const roomName = truncateText(room.name, 20);
                 roomRows[
-                    room.name
-                ] = `<tr data-room="${room.name}"><td style="pointer-events: none; cursor: not-allowed; min-width:140px"><span>${room.name}</span></td>`;
+                    roomName
+                ] = `<tr data-room="${roomName}"><td style="pointer-events: none; cursor: not-allowed; min-width:140px"><span>${roomName}</span></td>`;
                 for (let i = 5; i <= 39; i++) {
-                    roomRows[room.name] += `<td></td>`;
+                    roomRows[roomName] += `<td></td>`;
                 }
-                roomRows[room.name] += `</tr>`;
+                roomRows[roomName] += `</tr>`;
 
                 jq("#room_select")
-                    .append(`<li><a class="dropdown-item" href="#" data-value="${room.name}">${room.name}</a></li>
+                    .append(`<li><a class="dropdown-item" href="#" data-value="${roomName}">${roomName}</a></li>
                     `);
             });
 
@@ -1094,12 +1192,13 @@ const reserveModule = ((jq) => {
      * 로그아웃 => 로그인 폼을 띄운다.
      */
     _pubFn.checkLoginStatus = () => {
+        // URL 파라미터에서 username과 team 값 필터링
         const urlParams = new URLSearchParams(window.location.search);
-        const userName = urlParams.get("username");
-        const team = urlParams.get("team");
-        const isAdmin = getCookie("admin");
+        const userName = sanitizeInput(urlParams.get("username")); // 사용자 이름 필터링
+        const team = sanitizeInput(urlParams.get("team")); // 팀 이름 필터링
+        const isAdmin = getCookie("admin"); // 쿠키에서 관리자 여부 확인
 
-        // 관리자 계정일 때만 버튼을 보여줍니다.
+        // 관리자 계정일 때만 관리자 기능을 표시합니다.
         if (isAdmin) {
             jq("#create_team_btn").show();
             jq("#remove_team_btn").show();
@@ -1112,6 +1211,8 @@ const reserveModule = ((jq) => {
             jq("#welcome_container").removeClass("d-none");
             return;
         }
+
+        // 사용자가 로그인한 경우, 환영 메시지 표시
         if (userName && team) {
             jq(".login-container").addClass("d-none");
             jq("#welcome_message").text(
@@ -1134,6 +1235,12 @@ const reserveModule = ((jq) => {
     };
     const deleteCookie = (name) => {
         document.cookie = name + "=; expires=Thu, 01 Jan 1999 00:00:10 GMT;";
+    };
+    const truncateText = (text, maxLength) => {
+        if (text.length > maxLength) {
+            return text.substring(0, maxLength) + "...";
+        }
+        return text;
     };
 
     return _pubFn;

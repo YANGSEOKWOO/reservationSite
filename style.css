@@ -198,3 +198,13 @@ p {
     display: flex;
     flex-wrap: wrap;
 }
+
+/* 첫 번째 열 고정 */
+th:first-child,
+td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 1;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
