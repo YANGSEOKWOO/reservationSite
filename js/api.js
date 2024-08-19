@@ -586,6 +586,14 @@ const reserveModule = ((jq) => {
             .datetimepicker({
                 format: "LT", // 시간과 분만 표시
                 stepping: 30, // 30분 간격
+                icons: {
+                    time: "fa fa-clock", // 시간 아이콘
+                    date: "fa fa-calendar", // 날짜 아이콘
+                    up: "fa fa-chevron-up",
+                    down: "fa fa-chevron-down",
+                    previous: "fa fa-chevron-left",
+                    next: "fa fa-chevron-right",
+                },
             })
             .on("dp.change", function handleFromDateChange(e) {
                 jq("#reservation_to").data("DateTimePicker").minDate(e.date);
@@ -594,11 +602,14 @@ const reserveModule = ((jq) => {
         jq("#reservation_to").datetimepicker({
             format: "LT", // 시간과 분만 표시
             stepping: 30, // 30분 간격
-        });
-
-        jq("#reservation_to").datetimepicker({
-            format: "LT", // 시간과 분만 표시
-            stepping: 30, // 1시간 간격
+            icons: {
+                time: "fa fa-clock", // 시간 아이콘
+                date: "fa fa-calendar", // 날짜 아이콘
+                up: "fa fa-chevron-up",
+                down: "fa fa-chevron-down",
+                previous: "fa fa-chevron-left",
+                next: "fa fa-chevron-right",
+            },
         });
 
         // 예약하기 버튼 클릭 이벤트
@@ -769,6 +780,7 @@ const reserveModule = ((jq) => {
         /**
          * 수정하기 (버튼 클릭 이벤트)
          */
+        // 수정하기 버튼 클릭 이벤트
         jq(document).on("click", "#edit_reservation_btn", function (e) {
             e.preventDefault();
             jq(".detail_reservation_item").prop("readonly", false); // 읽기 전용 해제
@@ -798,16 +810,38 @@ const reserveModule = ((jq) => {
                 `<input class="form-control detail_reservation_item end-time datetimepicker" type="text">`
             );
 
-            jq(".start-time").datetimepicker({
-                format: "HH:mm",
-                stepping: 30,
-                defaultDate: startTimeVal, // 시작 시간 기본값 설정
-            });
+            jq(".start-time")
+                .datetimepicker({
+                    format: "LT", // 시간과 분만 표시
+                    stepping: 30, // 30분 간격
+                    icons: {
+                        time: "fa fa-clock", // 시간 아이콘
+                        date: "fa fa-calendar", // 날짜 아이콘
+                        up: "fa fa-chevron-up",
+                        down: "fa fa-chevron-down",
+                        previous: "fa fa-chevron-left",
+                        next: "fa fa-chevron-right",
+                    },
+                    defaultDate: startTimeVal,
+                })
+                .on("dp.change", function handleFromDateChange(e) {
+                    jq("#reservation_to")
+                        .data("DateTimePicker")
+                        .minDate(e.date);
+                });
 
             jq(".end-time").datetimepicker({
-                format: "HH:mm",
-                stepping: 30,
-                defaultDate: endTimeVal, // 종료 시간 기본값 설정
+                format: "LT", // 시간과 분만 표시
+                stepping: 30, // 30분 간격
+                icons: {
+                    time: "fa fa-clock", // 시간 아이콘
+                    date: "fa fa-calendar", // 날짜 아이콘
+                    up: "fa fa-chevron-up",
+                    down: "fa fa-chevron-down",
+                    previous: "fa fa-chevron-left",
+                    next: "fa fa-chevron-right",
+                },
+                defaultDate: endTimeVal,
             });
 
             // 팀 필드를 드롭다운으로 변경하고 기본값을 설정
@@ -840,6 +874,15 @@ const reserveModule = ((jq) => {
             const startTime = sanitizeInput(jq(".start-time").val()); // 시작 시간 필터링
             const endTime = sanitizeInput(jq(".end-time").val()); // 종료 시간 필터링
             const teamName = sanitizeInput(jq(".team-name").val()); // 팀 이름 필터링
+
+            if (
+                moment(startTime, "HH:mm").isSameOrAfter(
+                    moment(endTime, "HH:mm")
+                )
+            ) {
+                alert("시작 시간은 종료 시간보다 이른 시간이어야 합니다.");
+                return;
+            }
 
             // 수정된 시간과 방으로 예약 가능 여부 확인
             const isAvailable = isTimeSlotAvailable(
@@ -878,6 +921,19 @@ const reserveModule = ((jq) => {
                 alert("수정하는데 오류가 발생했습니다.");
             }
         });
+
+        // 모달이 닫힐 때 수정 버튼으로 되돌리기
+        jq("#detail_reservation_modal").on("hidden.bs.modal", function () {
+            // 저장 버튼을 다시 수정 버튼으로 변경
+            jq("#save_reservation_btn")
+                .text("수정하기")
+                .attr("id", "edit_reservation_btn");
+
+            // 다시 읽기 전용으로 설정
+            jq(".detail_reservation_item").prop("readonly", true);
+            jq(".detail_reservation_item").removeClass("blinking");
+        });
+
         // Add the event listener for the bi-caret-left icon
         jq(".bi-caret-left").on("mousedown", function () {
             jq(this)

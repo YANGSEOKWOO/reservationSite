@@ -212,3 +212,44 @@ td:first-child {
 #none_container {
     margin: 0 20px 0 20px;
 }
+
+/* Datetimepicker 위젯 전체 크기 및 높이 조정 */
+.bootstrap-datetimepicker-widget {
+    max-width: 220px; /* 전체 너비 */
+    padding: 0; /* 전체 위젯의 패딩 */
+    font-size: 0.9rem; /* 전체 텍스트 크기 */
+    height: auto; /* 높이를 자동 조정 */
+}
+
+/* 시간 선택 셀의 높이 줄이기 */
+.bootstrap-datetimepicker-widget table td span {
+    font-size: 0.8rem; /* 시간 텍스트 크기 */
+    padding: 0px; /* 셀의 패딩을 줄여 높이 감소 */
+    line-height: 1.2rem; /* 라인 높이를 줄여 더 작게 보이도록 */
+}
+
+/* 위아래 화살표 크기 및 높이 조정 */
+.bootstrap-datetimepicker-widget .timepicker-picker {
+    padding: 0; /* 내부 패딩 줄이기 */
+    height: auto; /* 높이 자동 조정 */
+}
+
+/* 아이콘 크기 및 높이 축소 */
+.bootstrap-datetimepicker-widget .glyphicon,
+.bootstrap-datetimepicker-widget .fa {
+    font-size: 0.4rem; /* 아이콘 크기 줄이기 */
+    height: 5px; /* 아이콘 높이 축소 */
+}
+
+/* 시간 간격 선택 버튼의 높이 조정 */
+.bootstrap-datetimepicker-widget .btn {
+    padding: 0px; /* 버튼 패딩 줄이기 */
+    font-size: 0.6rem; /* 버튼 텍스트 크기 */
+    height: auto; /* 버튼 높이 자동 조정 */
+}
+
+/* 화살표 아이콘 높이 조정 */
+.bootstrap-datetimepicker-widget .fa-chevron-up,
+.bootstrap-datetimepicker-widget .fa-chevron-down {
+    font-size: 0.5rem; /* 화살표 크기 축소 */
+}
