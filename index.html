@@ -88,7 +88,7 @@
                 </div>
                 <div class="search-container d-flex align-items-center">
                     <i class="fa-solid fa-magnifying-glass fa-xl" style="color: #cccccc;"></i>
-                    <div class="dropdown">
+                    <div class="dropdown-center">
                         <button class="btn dropdown-toggle" type="button" id="filter_select_team_btn"
                             data-bs-toggle="dropdown">필터링할 팀을 선택해 주세요</button>
                         <ul class="dropdown-menu" id="filter_team_select">
@@ -180,6 +180,12 @@
             </div>
             <div class="d-flex justify-content-between m-4">
                 <div class="button-container gap-2">
+                    <div class="time-container d-flex">
+                        <i class=" bi bi-caret-left h1"></i>
+                        <input id="date_select" class="form-control" type="text"
+                            style="max-width:300px; text-align: center;" />
+                        <i class="bi bi-caret-right h1"></i>
+                    </div>
                     <button type="button" class="btn btn-primary gap-2 middle-css rounded" data-bs-toggle="modal"
                         data-bs-target="#reservation_modal" style="min-width: 110px; height: 35px;"><i
                             class="fa-solid fa-circle-plus" style="color: #ffffff; "></i>
@@ -189,13 +195,9 @@
                         data-bs-target="#see_team_color" style="min-width: 102px; max-height: 38px;">
                         팀 색깔 보기
                     </button>
+
                 </div>
-                <div class="time-container d-flex">
-                    <i class=" bi bi-caret-left h1"></i>
-                    <input id="date_select" class="form-control" type="text"
-                        style="max-width:300px; text-align: center;" />
-                    <i class="bi bi-caret-right h1"></i>
-                </div>
+
                 <div></div>
             </div>
             <div class="collapse m-4" id="see_team_color">

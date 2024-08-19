@@ -47,17 +47,20 @@ const reserveModule = ((jq) => {
     let _meetingRooms;
     let _teams;
     let _selectedCells = [];
+    let scrollInterval = null;
     let isMouseDown = false;
     let startCellIndex = null;
+    let endCellIndex = null;
     let _selectRoom;
     let _filterTeam = "";
+
     const DateTime = luxon.DateTime;
     const today = DateTime.now();
     const todayFormatted = today.toFormat("yyyy-MM-dd");
 
     let _searchDate = todayFormatted;
 
-    const baseurl = "http://127.0.0.1:8011";
+    const baseurl = "http://127.0.0.1:8012";
     /**
      * TODO:: 팀 생성 API
      */
@@ -295,6 +298,7 @@ const reserveModule = ((jq) => {
             start_time: sanitizedStartTime,
             end_time: sanitizedEndTime,
         });
+        console.log("수정데이터:", data);
 
         return new Promise((resolve, reject) => {
             jq.ajax({
@@ -332,7 +336,6 @@ const reserveModule = ((jq) => {
                 contentType: "application/json",
             })
                 .done((response) => {
-                    console.log("로그인 response:", response);
                     resolve(response);
                 })
                 .fail((error) => {
@@ -390,7 +393,7 @@ const reserveModule = ((jq) => {
             start_time: `${sanitizedStartTime}:00`,
             end_time: `${sanitizedEndTime}:00`,
         });
-
+        console.log("예약만들기:", data);
         return new Promise((resolve, reject) => {
             jq.ajax({
                 url: url,
@@ -492,6 +495,9 @@ const reserveModule = ((jq) => {
         jq("#filter_team_select").empty();
         jq("#color-items").empty();
 
+        jq("#filter_team_select").append(
+            `<li><a href="#" class="dropdown-item">전체보기</a></li>`
+        );
         _teams.forEach((team) => {
             // 팀 이름과 색상을 필터링
             const sanitizedTeamName = truncateText(
@@ -549,10 +555,6 @@ const reserveModule = ((jq) => {
             </div>`;
             jq("#color-items").append(colorItem);
         });
-
-        jq("#filter_team_select").append(
-            `<li><a href="#" class="dropdown-item">전체보기</a></li>`
-        );
     };
 
     _pubFn.load = async () => {
@@ -570,6 +572,17 @@ const reserveModule = ((jq) => {
                 showClose: false,
                 dayViewHeaderFormat: "MMMM YYYY",
                 defaultDate: _searchDate,
+                icons: {
+                    time: "fa fa-clock", // 시간 아이콘
+                    date: "fa fa-calendar", // 달력 아이콘
+                    up: "fa fa-chevron-up", // 위로 이동 아이콘
+                    down: "fa fa-chevron-down", // 아래로 이동 아이콘
+                    previous: "fa fa-chevron-left", // 이전 달로 이동 아이콘
+                    next: "fa fa-chevron-right", // 다음 달로 이동 아이콘
+                    today: "fa fa-calendar-check-o", // 오늘로 이동하는 아이콘
+                    clear: "fa fa-trash", // 지우기 아이콘
+                    close: "fa fa-times", // 닫기 아이콘
+                },
             })
             .on("dp.change", function (e) {
                 if (!e.date || !e.oldDate || !e.date.isSame(e.oldDate, "day")) {
@@ -580,6 +593,17 @@ const reserveModule = ((jq) => {
             });
         jq("#reservation_date").datetimepicker({
             format: "YYYY-MM-DD",
+            icons: {
+                time: "fa fa-clock", // 시간 아이콘
+                date: "fa fa-calendar", // 달력 아이콘
+                up: "fa fa-chevron-up", // 위로 이동 아이콘
+                down: "fa fa-chevron-down", // 아래로 이동 아이콘
+                previous: "fa fa-chevron-left", // 이전 달로 이동 아이콘
+                next: "fa fa-chevron-right", // 다음 달로 이동 아이콘
+                today: "fa fa-calendar-check-o", // 오늘로 이동하는 아이콘
+                clear: "fa fa-trash", // 지우기 아이콘
+                close: "fa fa-times", // 닫기 아이콘
+            },
         });
 
         jq("#reservation_from")
@@ -717,6 +741,7 @@ const reserveModule = ((jq) => {
 
             try {
                 const response = await login({ loginData: loginData });
+                console.log("로그인 response:", response);
                 if (response.isAdmin === "true") {
                     setCookie("admin", "true", 1);
                     _pubFn.checkLoginStatus();
@@ -874,10 +899,14 @@ const reserveModule = ((jq) => {
             const startTime = sanitizeInput(jq(".start-time").val()); // 시작 시간 필터링
             const endTime = sanitizeInput(jq(".end-time").val()); // 종료 시간 필터링
             const teamName = sanitizeInput(jq(".team-name").val()); // 팀 이름 필터링
+            const parsedStartTime = moment(startTime, "hh:mm A").format(
+                "HH:mm:ss"
+            );
+            const parsedEndTime = moment(endTime, "hh:mm A").format("HH:mm:ss");
 
             if (
-                moment(startTime, "HH:mm").isSameOrAfter(
-                    moment(endTime, "HH:mm")
+                moment(startTime, "hh:mm A").isSameOrAfter(
+                    moment(endTime, "hh:mm A")
                 )
             ) {
                 alert("시작 시간은 종료 시간보다 이른 시간이어야 합니다.");
@@ -888,8 +917,8 @@ const reserveModule = ((jq) => {
             const isAvailable = isTimeSlotAvailable(
                 _searchDate,
                 roomName,
-                startTime,
-                endTime,
+                parsedStartTime,
+                parsedEndTime,
                 id
             );
 
@@ -903,8 +932,8 @@ const reserveModule = ((jq) => {
                 await updateReservationData({
                     id,
                     room_name: roomName,
-                    start_time: startTime,
-                    end_time: endTime,
+                    start_time: parsedStartTime,
+                    end_time: parsedEndTime,
                     team_name: teamName,
                     book_date: _searchDate,
                 });
@@ -940,7 +969,7 @@ const reserveModule = ((jq) => {
                 .removeClass("bi-caret-left")
                 .addClass("bi-caret-left-fill");
 
-            // Decrement the date by one day
+            // Decrement the date by rone day
             let currentDate = jq("#date_select").data("DateTimePicker").date();
             if (currentDate) {
                 let newDate = currentDate.subtract(1, "days");
@@ -986,12 +1015,58 @@ const reserveModule = ((jq) => {
 
             isMouseDown = true;
             startCellIndex = jq(this).index();
+            endCellIndex = startCellIndex;
             _selectedCells.push(jq(this));
             _selectRoom = roomName;
 
             jq(this).addClass("select"); // 시각적 강조
 
             return false; // 텍스트 드래그 방지
+        });
+        jq(document).on("mousemove", ".reserve-items td", function (e) {
+            const container = jq(".reservation-container")[0];
+            const mouseX = e.clientX;
+
+            if (isMouseDown) {
+                const cellIndex = jq(this).index();
+
+                // 오른쪽으로 드래그하는 경우
+                if (cellIndex > endCellIndex) {
+                    if (
+                        !jq(this).hasClass("reserved") &&
+                        _selectRoom ===
+                            sanitizeInput(jq(this).closest("tr").data("room"))
+                    ) {
+                        _selectedCells.push(jq(this));
+                        jq(this).addClass("select");
+                    }
+                }
+
+                endCellIndex = cellIndex;
+
+                // 스크롤 로직 추가: 마우스가 화면 가장자리에 도달하면 스크롤 시작
+                if (mouseX >= window.innerWidth - 50) {
+                    if (!scrollInterval) {
+                        scrollInterval = setInterval(() => {
+                            container.scrollLeft += 10;
+                        }, 30);
+                    }
+                } else if (mouseX <= 50) {
+                    if (!scrollInterval) {
+                        scrollInterval = setInterval(() => {
+                            container.scrollLeft -= 10;
+                        }, 30);
+                    }
+                } else {
+                    clearInterval(scrollInterval);
+                    scrollInterval = null;
+                }
+            }
+        });
+        jq(document).on("mouseup mouseleave", function () {
+            // 마우스 버튼을 놓거나 화면을 벗어났을 때 스크롤 중지
+            clearInterval(scrollInterval);
+            scrollInterval = null;
         });
 
         jq(document).on("mouseover", ".reserve-items td", function (e) {
@@ -1126,6 +1201,11 @@ const reserveModule = ((jq) => {
                 console.error(error);
             }
         });
+        // 모달이 닫힐 때 선택된 버튼 초기화
+        jq("#remove_meetingroom_modal").on("hidden.bs.modal", function () {
+            // 회의실 삭제 선택 버튼 및 데이터 초기화
+            jq("#delete_select_room_btn").text("회의실 선택").data("key", "");
+        });
         // 회의실 추가 버튼
         jq("#create_meetingroom").on("click", async function () {
             const roomName = sanitizeInput(jq("#meetingroom_name").val()); // 회의실 이름 필터링
@@ -1134,11 +1214,16 @@ const reserveModule = ((jq) => {
                 await createRoom({ roomName: roomName });
                 alert("회의실 생성이 완료되었습니다.");
                 jq("#create_meetingroom_modal").modal("hide");
+                jq("#meetingroom_name").val("");
                 reserveModule.load();
             } catch (error) {
                 alert(error);
                 console.log("error:", error);
             }
+        });
+        // 모달이 닫힐 때 입력 필드 초기화
+        jq("#create_meetingroom_modal").on("hidden.bs.modal", function () {
+            jq("#meetingroom_name").val(""); // 입력 필드 초기화
         });
         // 팀생성
         jq("#create_team").on("click", async function () {
@@ -1169,6 +1254,13 @@ const reserveModule = ((jq) => {
                 alert(error.responseJSON.detail);
             }
         });
+        // 모달이 닫힐 때 입력 필드 초기화
+        jq("#create_team_modal").on("hidden.bs.modal", function () {
+            // 팀 이름 및 색상 입력 필드 초기화
+            jq("#team_name").val("");
+            jq("#team_color").val("");
+        });
+
         jq("#remove_team_select").on("click", ".dropdown-item", function () {
             const selectedText = sanitizeInput(jq(this).text()); // 선택된 텍스트 필터링
             const selectedKey = sanitizeInput(jq(this).data("key")); // 선택된 키 필터링
@@ -1185,11 +1277,17 @@ const reserveModule = ((jq) => {
             try {
                 await removeTeam({ teamKey: removeKey });
                 alert("팀 삭제 완료!");
+                jq("#delete_select_team_btn").text("팀 선택");
                 jq("#remove_team_modal").modal("hide");
                 reserveModule.load();
             } catch (error) {
                 alert("팀을 삭제하는데 오류가 발생했습니다.:", error);
             }
+        });
+        // 모달이 닫힐 때 delete_select_team_btn 텍스트 초기화
+        jq("#remove_team_modal").on("hidden.bs.modal", function () {
+            // 버튼 텍스트 초기화
+            jq("#delete_select_team_btn").text("팀 선택");
         });
         jq("#filter_team_select").on("click", ".dropdown-item", function () {
             // 선택된 팀 이름과 팀 키 필터링

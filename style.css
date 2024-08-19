@@ -191,7 +191,7 @@ p {
 }
 
 #filter_select_team_btn {
-    min-width: 215px;
+    min-width: 160px;
 }
 
 #color-items {
@@ -205,7 +205,20 @@ td:first-child {
     position: sticky;
     left: 0;
     background-color: white;
-    z-index: 1;
+    z-index: 3; /* 첫 번째 셀을 가장 위에 둡니다 */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 두 번째 열도 고정 */
+th:nth-child(2),
+td:nth-child(2) {
+    position: sticky;
+    background-color: white;
+    z-index: 2; /* 두 번째 셀은 첫 번째 셀보다 아래에 있도록 설정 */
+}
+
+/* 스크롤 중 첫 번째 열이 항상 두 번째 열 위에 있어야 함 */
+.reservation-container th:first-child {
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -252,4 +265,8 @@ td:first-child {
 .bootstrap-datetimepicker-widget .fa-chevron-up,
 .bootstrap-datetimepicker-widget .fa-chevron-down {
     font-size: 0.5rem; /* 화살표 크기 축소 */
+}
+
+#login_btn {
+    cursor: pointer;
 }
