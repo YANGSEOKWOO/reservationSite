@@ -494,7 +494,11 @@ const reserveModule = ((jq) => {
 
         _teams.forEach((team) => {
             // 팀 이름과 색상을 필터링
-            const sanitizedTeamName = sanitizeInput(team.name);
+            const sanitizedTeamName = truncateText(
+                sanitizeInput(team.name),
+                10,
+                20
+            );
             const sanitizedTeamColor = sanitizeInput(team.color);
 
             const loginListItem = jq("<li></li>").append(
@@ -1089,7 +1093,10 @@ const reserveModule = ((jq) => {
                 alert("팀 이름을 입력해 주세요.");
                 return;
             }
-
+            if (!isValidName(teamName)) {
+                alert("유효하지 않은 팀 이름입니다.");
+                return;
+            }
             try {
                 const teamData = {
                     name: teamName,
@@ -1164,7 +1171,7 @@ const reserveModule = ((jq) => {
             const roomRows = {};
             jq("#room_select").empty();
             _meetingRooms.forEach((room) => {
-                const roomName = truncateText(room.name, 20);
+                const roomName = truncateText(room.name, 10, 20);
                 roomRows[
                     roomName
                 ] = `<tr data-room="${roomName}"><td style="pointer-events: none; cursor: not-allowed; min-width:140px"><span>${roomName}</span></td>`;
@@ -1236,11 +1243,58 @@ const reserveModule = ((jq) => {
     const deleteCookie = (name) => {
         document.cookie = name + "=; expires=Thu, 01 Jan 1999 00:00:10 GMT;";
     };
-    const truncateText = (text, maxLength) => {
-        if (text.length > maxLength) {
-            return text.substring(0, maxLength) + "...";
+    const truncateText = (text, maxKoreanLength, maxEnglishLength) => {
+        let koreanCount = 0;
+        let englishCount = 0;
+        let truncatedText = "";
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+
+            // 한글 유니코드 범위: 0xAC00 ~ 0xD7A3
+            if (char.charCodeAt(0) >= 0xac00 && char.charCodeAt(0) <= 0xd7a3) {
+                koreanCount += 1; // 한글은 1로 계산
+            } else {
+                englishCount += 1; // 영어는 1로 계산
+            }
+
+            if (
+                koreanCount <= maxKoreanLength &&
+                englishCount <= maxEnglishLength
+            ) {
+                truncatedText += char;
+            } else {
+                truncatedText += "...";
+                break;
+            }
         }
-        return text;
+
+        return truncatedText;
+    };
+    // 이름 검증 함수
+    const isValidName = (teamName) => {
+        // 최소 2글자 이상, 최대 20글자 이하
+        if (teamName.length < 2 || teamName.length > 25) {
+            return false;
+        }
+
+        // 자음 또는 모음만으로 이루어진 이름 방지
+        const consonantOnlyPattern = /^[ㄱ-ㅎ]+$/; // 자음만
+        const vowelOnlyPattern = /^[ㅏ-ㅣ]+$/; // 모음만
+        if (
+            consonantOnlyPattern.test(teamName) ||
+            vowelOnlyPattern.test(teamName)
+        ) {
+            return false;
+        }
+
+        // 한글(자음+모음), 영어, 공백만 허용
+        const validPattern = /^[가-힣a-zA-Z\s]+$/;
+        if (!validPattern.test(teamName)) {
+            return false;
+        }
+
+        return true;
     };
 
     return _pubFn;
